@@ -1,5 +1,5 @@
-import { initializeApp } from 'firebase/app';
-import { getFirestore } from 'firebase/firestore';
+import { initializeApp } from "firebase/app";
+import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -17,12 +17,5 @@ export const isFirebaseEnabled = Boolean(
     firebaseConfig.appId
 );
 
-let app = null;
-let db = null;
-
-if (isFirebaseEnabled) {
-  app = initializeApp(firebaseConfig);
-  db = getFirestore(app);
-}
-
-export { app, db };
+export const app = isFirebaseEnabled ? initializeApp(firebaseConfig) : null;
+export const db = isFirebaseEnabled ? getFirestore(app) : null;
