@@ -1,840 +1,889 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
 import {
-  ArrowLeft,
-  ArrowRight,
   BarChart3,
-  Check,
-  CheckCircle2,
-  Circle,
-  ClipboardList,
-  ExternalLink,
-  Layers3,
-  LockKeyhole,
-  PanelLeft,
+  ChevronLeft,
+  ChevronRight,
+  ClipboardCheck,
+  Eye,
   RotateCcw,
-  SearchCheck,
-  ShieldCheck,
-  Sparkles,
-  UserRound,
-  Wifi,
-  WifiOff,
+  Trophy,
 } from "lucide-react";
-import "./style.css";
+import { isFirebaseEnabled } from "./firebase";
 import {
-  completeParticipant,
-  createParticipant,
-  deleteParticipant,
-  listenAllParticipants,
-  saveAnswer,
+  loadOrCreateParticipant,
+  markParticipantComplete,
+  saveMetricScore,
+  subscribeParticipants,
 } from "./surveyDb";
 
-const CURRENT_VERSION = "firebase-three-choice-answer-key-v2";
-const ADMIN_PASSWORD = "carloskim";
+const questions = [
+  { sampleTitle: "3VT 01", file: "N0029_NM3_3VT_s512_z100_c0_h0.png", candidate_1: "ddib", candidate_2: "score", candidate_3: "flow" },
+  { sampleTitle: "3VT 02", file: "N0190_NM13_3VT_s512_z100_c0_h0.png", candidate_1: "ddib", candidate_2: "score", candidate_3: "flow" },
+  { sampleTitle: "3VT 03", file: "N0215_EX2_3VT_s512_z100_c0_h0.png", candidate_1: "flow", candidate_2: "score", candidate_3: "ddib" },
+  { sampleTitle: "3VT 04", file: "N0216_GD5_3VT_s512_z100_c0_h0.png", candidate_1: "ddib", candidate_2: "score", candidate_3: "flow" },
+  { sampleTitle: "3VT 05", file: "N0257_EX5_3VT_s512_z100_c0_h0.png", candidate_1: "ddib", candidate_2: "score", candidate_3: "flow" },
+  { sampleTitle: "3VT 06", file: "N0268_GD9_3VT_s512_z100_c0_h0.png", candidate_1: "score", candidate_2: "flow", candidate_3: "ddib" },
+  { sampleTitle: "3VV 01", file: "N0029_NM3_3VV_s512_z100_c0_h0.png", candidate_1: "ddib", candidate_2: "score", candidate_3: "flow" },
+  { sampleTitle: "3VV 02", file: "N0111_NM8_3VV_s512_z100_c0_h0.png", candidate_1: "flow", candidate_2: "ddib", candidate_3: "score" },
+  { sampleTitle: "3VV 03", file: "N0190_NM13_3VV2_s512_z100_c0_h0.png", candidate_1: "ddib", candidate_2: "score", candidate_3: "flow" },
+  { sampleTitle: "3VV 04", file: "N0190_NM13_3VV_s512_z100_c0_h0.png", candidate_1: "ddib", candidate_2: "score", candidate_3: "flow" },
+  { sampleTitle: "3VV 05", file: "N0215_EX2_3VV2_s512_z100_c0_h0.png", candidate_1: "flow", candidate_2: "score", candidate_3: "ddib" },
+  { sampleTitle: "3VV 06", file: "N0215_EX2_3VV_s512_z100_c0_h0.png", candidate_1: "flow", candidate_2: "score", candidate_3: "ddib" },
+  { sampleTitle: "3VV 07", file: "N0216_GD5_3VV_s512_z100_c0_h0.png", candidate_1: "score", candidate_2: "ddib", candidate_3: "flow" },
+  { sampleTitle: "3VV 08", file: "N0257_EX5_3VV_s512_z100_c0_h0.png", candidate_1: "score", candidate_2: "ddib", candidate_3: "flow" },
+  { sampleTitle: "3VV 09", file: "N0268_GD9_3VV_s512_z100_c0_h0.png", candidate_1: "flow", candidate_2: "ddib", candidate_3: "score" },
+  { sampleTitle: "4CH 01", file: "N0020_NM2_4CH_s512_z100_c0_h0.png", candidate_1: "score", candidate_2: "ddib", candidate_3: "flow" },
+  { sampleTitle: "4CH 02", file: "N0029_NM3_4CH_s512_z100_c0_h0.png", candidate_1: "score", candidate_2: "ddib", candidate_3: "flow" },
+  { sampleTitle: "4CH 03", file: "N0111_NM8_4CH_s512_z100_c0_h0.png", candidate_1: "score", candidate_2: "flow", candidate_3: "ddib" },
+  { sampleTitle: "4CH 04", file: "N0190_NM13_4CH_s512_z100_c0_h0.png", candidate_1: "ddib", candidate_2: "score", candidate_3: "flow" },
+  { sampleTitle: "4CH 05", file: "N0215_EX2_4CH_s512_z100_c0_h0.png", candidate_1: "score", candidate_2: "flow", candidate_3: "ddib" },
+  { sampleTitle: "4CH 06", file: "N0216_GD5_4CH_s512_z100_c0_h0.png", candidate_1: "score", candidate_2: "ddib", candidate_3: "flow" },
+  { sampleTitle: "4CH 07", file: "N0257_EX5_4CH_s512_z100_c0_h0.png", candidate_1: "score", candidate_2: "flow", candidate_3: "ddib" },
+  { sampleTitle: "4CH 08", file: "N0268_GD9_4CH_s512_z100_c0_h0.png", candidate_1: "ddib", candidate_2: "score", candidate_3: "flow" },
+  { sampleTitle: "LVOT 01", file: "N0020_NM2_LVOT_s512_z100_c0_h0.png", candidate_1: "ddib", candidate_2: "flow", candidate_3: "score" },
+  { sampleTitle: "LVOT 02", file: "N0190_NM13_LVOT_s512_z100_c0_h0.png", candidate_1: "score", candidate_2: "ddib", candidate_3: "flow" },
+  { sampleTitle: "LVOT 03", file: "N0215_EX2_LVOT_s512_z100_c0_h0.png", candidate_1: "score", candidate_2: "ddib", candidate_3: "flow" },
+  { sampleTitle: "LVOT 04", file: "N0216_GD5_LVOT_s512_z100_c0_h0.png", candidate_1: "ddib", candidate_2: "score", candidate_3: "flow" },
+  { sampleTitle: "LVOT 05", file: "N0257_EX5_LVOT_s512_z100_c0_h0.png", candidate_1: "flow", candidate_2: "ddib", candidate_3: "score" },
+  { sampleTitle: "LVOT 06", file: "N0268_GD9_LVOT_s512_z100_c0_h0.png", candidate_1: "score", candidate_2: "flow", candidate_3: "ddib" },
+  { sampleTitle: "RVOT 01", file: "N0020_NM2_RVOT_s512_z100_c0_h0.png", candidate_1: "flow", candidate_2: "ddib", candidate_3: "score" },
+  { sampleTitle: "RVOT 02", file: "N0111_NM8_RVOT_s512_z100_c0_h0.png", candidate_1: "ddib", candidate_2: "flow", candidate_3: "score" },
+  { sampleTitle: "RVOT 03", file: "N0215_EX2_RVOT_s512_z100_c0_h0.png", candidate_1: "flow", candidate_2: "score", candidate_3: "ddib" },
+  { sampleTitle: "RVOT 04", file: "N0257_EX5_RVOT2_s512_z100_c0_h0.png", candidate_1: "ddib", candidate_2: "score", candidate_3: "flow" },
+  { sampleTitle: "RVOT 05", file: "N0257_EX5_RVOT_s512_z100_c0_h0.png", candidate_1: "ddib", candidate_2: "flow", candidate_3: "score" },
+  { sampleTitle: "RVOT 06", file: "N0268_GD9_RVOT_s512_z100_c0_h0.png", candidate_1: "flow", candidate_2: "ddib", candidate_3: "score" },
+  { sampleTitle: "AA 01", file: "N0020_NM2_AA_s512_z100_c0_h0.png", candidate_1: "ddib", candidate_2: "flow", candidate_3: "score" },
+  { sampleTitle: "AA 02", file: "N0029_NM3_AA_s512_z100_c0_h0.png", candidate_1: "score", candidate_2: "flow", candidate_3: "ddib" },
+  { sampleTitle: "AA 03", file: "N0111_NM8_AA_s512_z100_c0_h0.png", candidate_1: "ddib", candidate_2: "score", candidate_3: "flow" },
+  { sampleTitle: "AA 04", file: "N0190_NM13_AA_s512_z100_c0_h0.png", candidate_1: "ddib", candidate_2: "score", candidate_3: "flow" },
+  { sampleTitle: "AA 05", file: "N0215_EX2_AA_s512_z100_c0_h0.png", candidate_1: "flow", candidate_2: "score", candidate_3: "ddib" },
+  { sampleTitle: "AA 06", file: "N0216_GD5_AA_s512_z100_c0_h0.png", candidate_1: "flow", candidate_2: "score", candidate_3: "ddib" },
+  { sampleTitle: "AA 07", file: "N0257_EX5_AA_s512_z100_c0_h0.png", candidate_1: "ddib", candidate_2: "score", candidate_3: "flow" },
+  { sampleTitle: "AA 08", file: "N0268_GD9_AA_s512_z100_c0_h0.png", candidate_1: "flow", candidate_2: "ddib", candidate_3: "score" },
+  { sampleTitle: "DA 01", file: "N0190_NM13_DA_s512_z100_c0_h0.png", candidate_1: "flow", candidate_2: "ddib", candidate_3: "score" },
+  { sampleTitle: "DA 02", file: "N0215_EX2_DA_s512_z100_c0_h0.png", candidate_1: "score", candidate_2: "flow", candidate_3: "ddib" },
+  { sampleTitle: "DA 03", file: "N0257_EX5_DA_s512_z100_c0_h0.png", candidate_1: "flow", candidate_2: "ddib", candidate_3: "score" },
+  { sampleTitle: "DA 04", file: "N0268_GD9_DA_s512_z100_c0_h0.png", candidate_1: "flow", candidate_2: "ddib", candidate_3: "score" },
+].map((item, index) => ({
+  id: `Q${String(index + 1).padStart(2, "0")}`,
+  view: item.sampleTitle.split(" ")[0],
+  ...item,
+}));
 
-const phaseConfig = [
-  { id: "A", label: "Phase A", shortLabel: "A", count: 15, subtitle: "1차 후보 비교", tone: "phase-a" },
-  { id: "B", label: "Phase B", shortLabel: "B", count: 14, subtitle: "2차 후보 비교", tone: "phase-b" },
-  { id: "C", label: "Phase C", shortLabel: "C", count: 11, subtitle: "최종 후보 비교", tone: "phase-c" },
+const metrics = [
+  {
+    id: "artifact",
+    label: "아티팩트 개선",
+    full: "3D 영상 특유의 패턴 아티팩트가 완화되었나요?",
+    scale: ["전혀 완화되지 않음", "소폭 완화", "다소 완화", "확연히 완화"],
+  },
+  {
+    id: "hallucination",
+    label: "할루시네이션 개선",
+    full: "영상 내 실제 존재하지 않는 구조가 관찰되었나요?",
+    scale: ["명확하게 관찰됨", "다소 관찰됨", "경미하게 관찰됨", "관찰되지 않음"],
+  },
+  {
+    id: "resolution",
+    label: "해상도 개선",
+    full: "영상의 전반적인 해상도와 세부 구조 표현이 개선되었나요?",
+    scale: ["전혀 개선되지 않음", "소폭 개선", "다소 개선", "확연히 개선"],
+  },
+  {
+    id: "contrast",
+    label: "Contrast 개선",
+    full: "영상 전반의 대비가 개선되었나요?",
+    scale: ["전혀 개선되지 않음", "소폭 개선", "다소 개선", "확연히 개선"],
+  },
+  {
+    id: "noise",
+    label: "노이즈 개선",
+    full: "영상 전반의 노이즈가 감소하였나요?",
+    scale: ["전혀 감소하지 않음", "소폭 감소", "다소 감소", "확연히 감소"],
+  },
 ];
 
-const choices = [
-  { id: "candidate_1", label: "후보 1", short: "1", gradient: "linear-gradient(135deg, #4f46e5, #06b6d4)" },
-  { id: "candidate_2", label: "후보 2", short: "2", gradient: "linear-gradient(135deg, #db2777, #f97316)" },
-  { id: "candidate_3", label: "후보 3", short: "3", gradient: "linear-gradient(135deg, #059669, #14b8a6)" },
+const imageSlots = [
+  { id: "input", label: "Input" },
+  { id: "candidate_1", label: "Candidate 1" },
+  { id: "candidate_2", label: "Candidate 2" },
+  { id: "candidate_3", label: "Candidate 3" },
 ];
 
-const methods = [
-  { id: "score", label: "score", short: "S", gradient: "linear-gradient(135deg, #4f46e5, #06b6d4)" },
-  { id: "ddib", label: "ddib", short: "D", gradient: "linear-gradient(135deg, #db2777, #f97316)" },
-  { id: "flow_matching", label: "flow_matching", short: "F", gradient: "linear-gradient(135deg, #059669, #14b8a6)" },
-];
+const candidateList = imageSlots.filter((slot) => slot.id !== "input");
+const methods = ["score", "ddib", "flow"];
 
-const answerKey = {
-  "A-01": { inputFile: "0_250_slice.png", candidate_1: "score", candidate_2: "ddib", candidate_3: "flow_matching" },
-  "A-02": { inputFile: "0_260_slice.png", candidate_1: "ddib", candidate_2: "flow_matching", candidate_3: "score" },
-  "A-03": { inputFile: "0_270_slice.png", candidate_1: "flow_matching", candidate_2: "score", candidate_3: "ddib" },
-  "A-04": { inputFile: "0_280_slice.png", candidate_1: "flow_matching", candidate_2: "score", candidate_3: "ddib" },
-  "A-05": { inputFile: "1_250_slice.png", candidate_1: "flow_matching", candidate_2: "score", candidate_3: "ddib" },
-  "A-06": { inputFile: "1_260_slice.png", candidate_1: "score", candidate_2: "ddib", candidate_3: "flow_matching" },
-  "A-07": { inputFile: "1_270_slice.png", candidate_1: "flow_matching", candidate_2: "score", candidate_3: "ddib" },
-  "A-08": { inputFile: "1_280_slice.png", candidate_1: "score", candidate_2: "flow_matching", candidate_3: "ddib" },
-  "A-09": { inputFile: "22_250_slice.png", candidate_1: "score", candidate_2: "ddib", candidate_3: "flow_matching" },
-  "A-10": { inputFile: "22_260_slice.png", candidate_1: "score", candidate_2: "flow_matching", candidate_3: "ddib" },
-  "A-11": { inputFile: "22_270_slice.png", candidate_1: "flow_matching", candidate_2: "ddib", candidate_3: "score" },
-  "A-12": { inputFile: "3_240_slice.png", candidate_1: "flow_matching", candidate_2: "score", candidate_3: "ddib" },
-  "A-13": { inputFile: "3_250_slice.png", candidate_1: "score", candidate_2: "flow_matching", candidate_3: "ddib" },
-  "A-14": { inputFile: "3_260_slice.png", candidate_1: "ddib", candidate_2: "flow_matching", candidate_3: "score" },
-  "A-15": { inputFile: "3_270_slice.png", candidate_1: "flow_matching", candidate_2: "score", candidate_3: "ddib" },
-
-  "B-01": { inputFile: "0_240_slice.png", candidate_1: "score", candidate_2: "ddib", candidate_3: "flow_matching" },
-  "B-02": { inputFile: "0_250_slice.png", candidate_1: "ddib", candidate_2: "score", candidate_3: "flow_matching" },
-  "B-03": { inputFile: "0_260_slice.png", candidate_1: "score", candidate_2: "flow_matching", candidate_3: "ddib" },
-  "B-04": { inputFile: "0_270_slice.png", candidate_1: "ddib", candidate_2: "score", candidate_3: "flow_matching" },
-  "B-05": { inputFile: "3_240_slice.png", candidate_1: "ddib", candidate_2: "score", candidate_3: "flow_matching" },
-  "B-06": { inputFile: "3_250_slice.png", candidate_1: "flow_matching", candidate_2: "score", candidate_3: "ddib" },
-  "B-07": { inputFile: "3_260_slice.png", candidate_1: "score", candidate_2: "ddib", candidate_3: "flow_matching" },
-  "B-08": { inputFile: "3_270_slice.png", candidate_1: "ddib", candidate_2: "score", candidate_3: "flow_matching" },
-  "B-09": { inputFile: "56_295_slice.png", candidate_1: "flow_matching", candidate_2: "score", candidate_3: "ddib" },
-  "B-10": { inputFile: "56_305_slice.png", candidate_1: "flow_matching", candidate_2: "ddib", candidate_3: "score" },
-  "B-11": { inputFile: "56_315_slice.png", candidate_1: "score", candidate_2: "flow_matching", candidate_3: "ddib" },
-  "B-12": { inputFile: "61_240_slice.png", candidate_1: "ddib", candidate_2: "flow_matching", candidate_3: "score" },
-  "B-13": { inputFile: "61_250_slice.png", candidate_1: "ddib", candidate_2: "flow_matching", candidate_3: "score" },
-  "B-14": { inputFile: "61_260_slice.png", candidate_1: "score", candidate_2: "ddib", candidate_3: "flow_matching" },
-
-  "C-01": { inputFile: "0_240_slice.png", candidate_1: "score", candidate_2: "ddib", candidate_3: "flow_matching" },
-  "C-02": { inputFile: "0_250_slice.png", candidate_1: "score", candidate_2: "flow_matching", candidate_3: "ddib" },
-  "C-03": { inputFile: "0_260_slice.png", candidate_1: "score", candidate_2: "ddib", candidate_3: "flow_matching" },
-  "C-04": { inputFile: "1_220_slice.png", candidate_1: "score", candidate_2: "ddib", candidate_3: "flow_matching" },
-  "C-05": { inputFile: "1_230_slice.png", candidate_1: "score", candidate_2: "ddib", candidate_3: "flow_matching" },
-  "C-06": { inputFile: "1_240_slice.png", candidate_1: "score", candidate_2: "flow_matching", candidate_3: "ddib" },
-  "C-07": { inputFile: "1_250_slice.png", candidate_1: "score", candidate_2: "ddib", candidate_3: "flow_matching" },
-  "C-08": { inputFile: "22_200_slice.png", candidate_1: "score", candidate_2: "flow_matching", candidate_3: "ddib" },
-  "C-09": { inputFile: "22_210_slice.png", candidate_1: "ddib", candidate_2: "score", candidate_3: "flow_matching" },
-  "C-10": { inputFile: "22_220_slice.png", candidate_1: "flow_matching", candidate_2: "score", candidate_3: "ddib" },
-  "C-11": { inputFile: "22_230_slice.png", candidate_1: "flow_matching", candidate_2: "score", candidate_3: "ddib" },
-};
-
-const questions = phaseConfig.flatMap((phase) =>
-  Array.from({ length: phase.count }, (_, index) => {
-    const number = String(index + 1).padStart(2, "0");
-    const id = `${phase.id}-${number}`;
-    return {
-      id,
-      phase: phase.id,
-      number: index + 1,
-      title: `${phase.label} · ${number}`,
-      prompt: `${phase.shortLabel}-${number} 케이스에서 가장 선호하는 후보를 선택하세요.`,
-      inputFile: answerKey[id]?.inputFile || "",
-    };
-  })
-);
-
-function cx(...tokens) {
-  return tokens.filter(Boolean).join(" ");
-}
-
-function getPhase(id) {
-  return phaseConfig.find((phase) => phase.id === id) || phaseConfig[0];
-}
-
-function getQuestionIndexById(id) {
-  return questions.findIndex((question) => question.id === id);
-}
-
-function normalizeParticipant(raw) {
-  if (!raw) return null;
-  return {
-    evaluatorId: raw.evaluatorId,
-    answers: raw.answers || {},
-    completedAt: raw.completedAt || null,
-    createdAt: raw.createdAt || null,
-    updatedAt: raw.updatedAt || null,
+const answerKey = questions.reduce((acc, question) => {
+  acc[question.id] = {
+    candidate_1: question.candidate_1,
+    candidate_2: question.candidate_2,
+    candidate_3: question.candidate_3,
   };
+  return acc;
+}, {});
+
+function cn(...items) {
+  return items.filter(Boolean).join(" ");
 }
 
-function calcProgress(answers) {
-  const answered = questions.filter((question) => answers?.[question.id]).length;
-  return {
-    answered,
-    total: questions.length,
-    percent: Math.round((answered / questions.length) * 100),
-  };
+function countQuestionScores(questionAnswer) {
+  if (!questionAnswer) return 0;
+  return candidateList.reduce((sum, candidate) => {
+    const scores = questionAnswer[candidate.id] || {};
+    return sum + metrics.filter((metric) => scores[metric.id] !== undefined).length;
+  }, 0);
 }
 
-function candidateToMethod(questionId, candidateId) {
-  return answerKey[questionId]?.[candidateId] || "unknown";
+function countAllScores(answers) {
+  return questions.reduce((sum, question) => sum + countQuestionScores(answers?.[question.id]), 0);
 }
 
-function createEmptyMethodStats() {
-  return {
-    score: 0,
-    ddib: 0,
-    flow_matching: 0,
-    unknown: 0,
-    missing: 0,
-    total: 0,
-  };
+function getImageSrc(slotId, file) {
+  if (slotId === "input") return `/images/input/${file}`;
+  return `/images/${slotId}/${file}`;
 }
 
-function getMethodTotal(stats) {
-  return methods.reduce((sum, method) => sum + (stats?.[method.id] || 0), 0);
-}
-
-function computeStats(participants, options = {}) {
-  const completed = participants.filter((participant) => participant.completedAt);
-  const source = options.includeIncomplete ? participants : completed;
-
-  const byQuestion = Object.fromEntries(questions.map((question) => [question.id, createEmptyMethodStats()]));
-  const byPhase = Object.fromEntries(
-    phaseConfig.map((phase) => [phase.id, { ...createEmptyMethodStats(), questionCount: phase.count }])
-  );
-  const overall = createEmptyMethodStats();
-
-  for (const participant of source) {
-    for (const question of questions) {
-      const selectedCandidate = participant.answers?.[question.id];
-      const questionStats = byQuestion[question.id];
-      const phaseStats = byPhase[question.phase];
-
-      if (choices.some((choice) => choice.id === selectedCandidate)) {
-        const method = candidateToMethod(question.id, selectedCandidate);
-        const key = methods.some((item) => item.id === method) ? method : "unknown";
-        questionStats[key] += 1;
-        phaseStats[key] += 1;
-        overall[key] += 1;
-      } else {
-        questionStats.missing += 1;
-        phaseStats.missing += 1;
-        overall.missing += 1;
-      }
-
-      questionStats.total += 1;
-      phaseStats.total += 1;
-      overall.total += 1;
-    }
-  }
-
-  return { completed, byQuestion, byPhase, overall };
-}
-
-function Button({ children, variant = "primary", size = "md", className = "", ...props }) {
-  return (
-    <button className={cx("btn", `btn-${variant}`, `btn-${size}`, className)} {...props}>
-      {children}
-    </button>
-  );
-}
-
-function Shell({ children, theme = "light" }) {
-  return <main className={cx("app-shell", theme === "dark" && "app-shell-dark")}>{children}</main>;
-}
-
-function DbStatus({ status, error }) {
-  const ok = status === "connected";
-  const loading = status === "connecting";
+function ImagePreview({ slot, question }) {
+  const [failed, setFailed] = useState(false);
 
   return (
-    <div className={cx("db-status", ok && "db-ok", loading && "db-loading", !ok && !loading && "db-error")} title={error || ""}>
-      {ok ? <Wifi size={15} /> : <WifiOff size={15} />}
-      {ok ? "DB connected" : loading ? "DB connecting" : "DB error"}
-    </div>
-  );
-}
-
-function StartScreen({ participants, dbStatus, dbError, onStart, onShowResults }) {
-  const [evaluatorId, setEvaluatorId] = useState("");
-  const [error, setError] = useState("");
-  const [submitting, setSubmitting] = useState(false);
-
-  async function submit(event) {
-    event.preventDefault();
-    setError("");
-    setSubmitting(true);
-
-    try {
-      await onStart(evaluatorId);
-    } catch (err) {
-      setError(err?.message || "평가자 등록 중 문제가 발생했습니다.");
-    } finally {
-      setSubmitting(false);
-    }
-  }
-
-  return (
-    <Shell theme="dark">
-      <section className="hero-grid">
-        <motion.div initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.45 }} className="hero-copy">
-          <div className="eyebrow"><Sparkles size={16} /> Medison Blind Test</div>
-          <h1 className="landing-title">Fetal Ultrasound Blind Test</h1>
-          <p className="hero-description">
-            각 케이스에서 가장 선호하는 후보를 빠르게 선택하세요. 결과는 method 기준으로 자동 집계됩니다.
-          </p>
-
-          <div className="hero-stats">
-            <div className="hero-stat-card"><strong>40</strong><span>총 문항</span></div>
-            <div className="hero-stat-card"><strong>3</strong><span>방법 수</span><small>score · ddib · flow_matching</small></div>
-            <div className="hero-stat-card"><strong>{participants.length}</strong><span>등록 ID</span></div>
-          </div>
-
-          <div className="phase-strip">
-            {phaseConfig.map((phase) => (
-              <div key={phase.id} className={cx("phase-pill", phase.tone)}>
-                <span>{phase.label}</span>
-                <strong>{phase.count}문항</strong>
-              </div>
-            ))}
-          </div>
-        </motion.div>
-
-        <motion.form initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.45, delay: 0.06 }} className="login-card" onSubmit={submit}>
-          <div className="login-card-top">
-            <div className="login-icon"><UserRound size={26} /></div>
-            <DbStatus status={dbStatus} error={dbError} />
-          </div>
-          <h2>평가자 등록</h2>
-          <p>평가자 ID는 한글, 영문, 숫자, 공백, 특수문자를 대부분 사용할 수 있습니다. 같은 ID는 중복 등록되지 않습니다.</p>
-
-          <label className="input-label" htmlFor="evaluator-id">Evaluator ID</label>
-          <input
-            id="evaluator-id"
-            value={evaluatorId}
-            onChange={(event) => {
-              setEvaluatorId(event.target.value);
-              setError("");
-            }}
-            placeholder="예: 홍길동 1차, rater 001, 김OO"
-            autoComplete="off"
-            disabled={submitting}
+    <div className="rounded-2xl bg-slate-100 p-1.5 sm:p-2">
+      <div className="relative aspect-video overflow-hidden rounded-xl bg-gradient-to-br from-slate-900 via-slate-700 to-slate-500">
+        {!failed && (
+          <img
+            src={getImageSrc(slot.id, question.file)}
+            alt={`${question.sampleTitle} ${slot.label}`}
+            className="h-full w-full object-contain"
+            onError={() => setFailed(true)}
           />
+        )}
 
-          {error && <div className="error-box">{error}</div>}
-          {dbError && <div className="error-box">DB 연결 오류: {dbError}</div>}
-
-          <Button size="lg" className="full-width" type="submit" disabled={submitting || dbStatus === "error"}>
-            {submitting ? "등록 중" : "평가 시작"}
-            <ArrowRight size={18} />
-          </Button>
-
-          <button type="button" className="ghost-link" onClick={onShowResults}>
-            기존 결과 보기 <ExternalLink size={15} />
-          </button>
-
-          <div className="note-box">
-            <LockKeyhole size={16} />
-            현재 버전은 Firebase Firestore에 저장합니다. 보안 규칙은 배포 전에 반드시 제한해야 합니다.
+        {failed && (
+          <div className="flex h-full items-center justify-center bg-black/10 text-center text-sm font-black leading-tight text-white/90 sm:text-base">
+            {slot.label}
+            <br />
+            image
           </div>
-        </motion.form>
-      </section>
-    </Shell>
-  );
-}
-
-function TopBar({ participant, answers, saveState, onStats, onRestart }) {
-  const progress = calcProgress(answers);
-
-  return (
-    <header className="topbar">
-      <div className="brand-mark">
-        <div className="brand-logo"><ClipboardList size={20} /></div>
-        <div>
-          <strong>Blind Survey</strong>
-          <span>ID · {participant.evaluatorId}</span>
-        </div>
-      </div>
-
-      <div className="top-actions">
-        <Button variant="soft" onClick={onStats}><BarChart3 size={17} /> 결과</Button>
-        <Button variant="ghost" onClick={onRestart}><RotateCcw size={17} /></Button>
-      </div>
-
-      <div className="top-progress">
-        <div className="top-progress-label">
-          <span>{progress.answered}/{progress.total} answered · {saveState}</span>
-          <strong>{progress.percent}%</strong>
-        </div>
-        <div className="progress-track"><div style={{ width: `${progress.percent}%` }} /></div>
-      </div>
-    </header>
-  );
-}
-
-function PhaseProgressCard({ phase, answers, currentIndex, onJump }) {
-  const phaseQuestions = questions.filter((question) => question.phase === phase.id);
-  const answered = phaseQuestions.filter((question) => answers[question.id]).length;
-  const percent = Math.round((answered / phaseQuestions.length) * 100);
-
-  return (
-    <div className="phase-card">
-      <div className="phase-card-head">
-        <div><span className={cx("phase-dot", phase.tone)} /><strong>{phase.label}</strong></div>
-        <em>{answered}/{phaseQuestions.length}</em>
-      </div>
-      <div className="mini-track"><div className={phase.tone} style={{ width: `${percent}%` }} /></div>
-      <div className="question-grid">
-        {phaseQuestions.map((question) => {
-          const index = getQuestionIndexById(question.id);
-          const active = index === currentIndex;
-          const done = Boolean(answers[question.id]);
-          return (
-            <button key={question.id} className={cx("q-dot", active && "active", done && "done")} onClick={() => onJump(index)} title={question.id}>
-              {question.number}
-            </button>
-          );
-        })}
+        )}
       </div>
     </div>
   );
 }
 
-function Navigator({ answers, currentIndex, onJump }) {
+function ImagePreviewRow({ question }) {
   return (
-    <aside className="navigator">
-      <div className="navigator-title"><PanelLeft size={17} /> 빠른 이동</div>
-      {phaseConfig.map((phase) => (
-        <PhaseProgressCard key={phase.id} phase={phase} answers={answers} currentIndex={currentIndex} onJump={onJump} />
+    <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3">
+      {imageSlots.map((slot) => (
+        <ImagePreview key={`${question.id}-${slot.id}`} slot={slot} question={question} />
       ))}
-    </aside>
+    </div>
   );
 }
 
-function ChoiceButton({ choice, selected, disabled, onClick }) {
+function ScoreButtons({ selected, onSelect, metric }) {
   return (
-    <button className={cx("choice-button", selected && "selected")} onClick={onClick} disabled={disabled}>
-      <div className="choice-number">{choice.short}</div>
-      <div className="choice-copy"><strong>{choice.label}</strong></div>
-      <div className="choice-check">{selected ? <Check size={22} /> : <Circle size={22} />}</div>
-    </button>
+    <div className="grid grid-cols-4 gap-2">
+      {[0, 1, 2, 3].map((score) => (
+        <button
+          key={score}
+          onClick={() => onSelect(score)}
+          title={metric.scale[score]}
+          className={cn(
+            "rounded-xl border py-2.5 text-base font-black transition active:scale-[0.98] sm:py-3",
+            selected === score
+              ? "border-[#0f5d75] bg-[#0f5d75] text-white shadow-md shadow-[#0f5d75]/20"
+              : "border-slate-200 bg-white text-slate-500 hover:bg-slate-50"
+          )}
+        >
+          {score}
+        </button>
+      ))}
+    </div>
   );
 }
 
-function SurveyScreen({ participant, setParticipant, onShowStats, onRestart }) {
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [warning, setWarning] = useState("");
-  const [saveState, setSaveState] = useState("ready");
-  const question = questions[currentIndex];
-  const phase = getPhase(question.phase);
-  const answers = participant.answers || {};
-  const progress = calcProgress(answers);
-  const selectedChoice = answers[question.id];
-
-  async function choose(choiceId) {
-    setWarning("");
-    const previous = participant;
-    const nextParticipant = {
-      ...participant,
-      answers: {
-        ...answers,
-        [question.id]: choiceId,
-      },
-    };
-
-    setParticipant(nextParticipant);
-    setSaveState("saving...");
-
-    try {
-      await saveAnswer(participant.evaluatorId, question.id, choiceId);
-      setSaveState("saved");
-      if (currentIndex < questions.length - 1) {
-        setTimeout(() => setCurrentIndex((value) => Math.min(value + 1, questions.length - 1)), 120);
-      }
-    } catch (err) {
-      setParticipant(previous);
-      setSaveState("save failed");
-      setWarning(err?.message || "응답 저장에 실패했습니다.");
-    }
-  }
-
-  function goNext() {
-    setCurrentIndex((value) => Math.min(value + 1, questions.length - 1));
-  }
-
-  function goPrevious() {
-    setCurrentIndex((value) => Math.max(value - 1, 0));
-  }
-
-  async function finish() {
-    const missing = questions.filter((item) => !answers[item.id]);
-    if (missing.length > 0) {
-      const firstMissingIndex = getQuestionIndexById(missing[0].id);
-      setCurrentIndex(firstMissingIndex);
-      setWarning(`미응답 ${missing.length}개가 남았습니다. ${missing[0].id}로 이동했습니다.`);
-      return;
-    }
-
-    setSaveState("completing...");
-    try {
-      await completeParticipant(participant.evaluatorId);
-      setParticipant({ ...participant, completedAt: new Date().toISOString() });
-      setSaveState("completed");
-      onShowStats();
-    } catch (err) {
-      setSaveState("complete failed");
-      setWarning(err?.message || "완료 처리에 실패했습니다.");
-    }
-  }
-
+function DesktopScoreTable({ question, answers, onScore }) {
   return (
-    <Shell>
-      <TopBar participant={participant} answers={answers} saveState={saveState} onStats={onShowStats} onRestart={onRestart} />
-
-      <div className="survey-layout">
-        <Navigator answers={answers} currentIndex={currentIndex} onJump={setCurrentIndex} />
-
-        <section className="survey-main">
-          <div className="mobile-phase-nav">
-            {phaseConfig.map((item) => (
-              <button key={item.id} className={cx(item.id === phase.id && "active")} onClick={() => setCurrentIndex(getQuestionIndexById(`${item.id}-01`))}>
-                {item.id}
-              </button>
+    <div className="hidden md:block">
+      <table className="w-full table-fixed border-collapse text-center">
+        <thead>
+          <tr>
+            <th className="w-[25%] border-b border-r border-slate-300 bg-white px-3 py-5" />
+            {candidateList.map((candidate) => (
+              <th
+                key={candidate.id}
+                className="border-b border-r border-slate-300 bg-white px-3 py-5 text-2xl font-black text-slate-950 last:border-r-0"
+              >
+                {candidate.label}
+              </th>
             ))}
-          </div>
+          </tr>
+        </thead>
 
-          <AnimatePresence mode="wait">
-            <motion.div key={question.id} initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -14 }} transition={{ duration: 0.2 }} className="question-panel">
-              <div className="question-head">
-                <div>
-                  <div className={cx("phase-badge", phase.tone)}>{phase.label}</div>
-                  <h2>{question.id}</h2>
-                  <p>{question.prompt}</p>
-                  {question.inputFile && <p className="input-file-line">Input file: {question.inputFile}</p>}
-                </div>
-                <div className="case-counter"><span>Case</span><strong>{currentIndex + 1}</strong><em>/ {questions.length}</em></div>
-              </div>
+        <tbody>
+          {metrics.map((metric) => (
+            <tr key={metric.id}>
+              <th className="border-r border-t border-slate-300 bg-white px-5 py-5 text-left text-2xl font-black leading-tight text-slate-950">
+                {metric.label}
+              </th>
 
-              <div className="image-placeholder-card">
-                <Layers3 size={28} />
-                <div>
-                  <strong>외부 화면에서 확인</strong>
-                  <span>선택 시 자동 이동</span>
-                </div>
-              </div>
+              {candidateList.map((candidate) => {
+                const selected = answers[question.id]?.[candidate.id]?.[metric.id];
 
-              <div className="choice-grid">
-                {choices.map((choice) => (
-                  <ChoiceButton key={choice.id} choice={choice} selected={selectedChoice === choice.id} disabled={saveState === "saving..."} onClick={() => choose(choice.id)} />
-                ))}
-              </div>
+                return (
+                  <td
+                    key={candidate.id}
+                    className="border-r border-t border-slate-300 px-3 py-5 last:border-r-0"
+                  >
+                    <div className="mx-auto max-w-[240px]">
+                      <ScoreButtons
+                        selected={selected}
+                        metric={metric}
+                        onSelect={(score) => onScore(question.id, candidate.id, metric.id, score)}
+                      />
+                    </div>
 
-              {warning && <div className="warning-box"><SearchCheck size={17} /> {warning}</div>}
-
-              <div className="survey-footer">
-                <Button variant="outline" size="lg" className="footer-nav-btn footer-nav-left" onClick={goPrevious} disabled={currentIndex === 0}>
-                  <ArrowLeft size={18} /> 뒤로
-                </Button>
-
-                <div className="footer-progress-pill">
-                  <span>진행률</span>
-                  <strong>{progress.answered}<em> / {progress.total}</em></strong>
-                </div>
-
-                {currentIndex === questions.length - 1 ? (
-                  <Button size="lg" className="footer-nav-btn footer-nav-right" onClick={finish}>완료 <CheckCircle2 size={18} /></Button>
-                ) : (
-                  <Button variant="outline" size="lg" className="footer-nav-btn footer-nav-right" onClick={goNext}>다음 <ArrowRight size={18} /></Button>
-                )}
-              </div>
-            </motion.div>
-          </AnimatePresence>
-        </section>
-      </div>
-    </Shell>
-  );
-}
-
-function BarPlot({ stats, compact = false }) {
-  const answeredTotal = getMethodTotal(stats);
-  const rows = methods.map((method) => {
-    const value = stats?.[method.id] || 0;
-    const percent = answeredTotal ? Math.round((value / answeredTotal) * 100) : 0;
-    return { ...method, value, percent };
-  });
-  const maxValue = Math.max(1, ...rows.map((row) => row.value));
-
-  return (
-    <div className="barplot" style={{ gap: compact ? 8 : 12 }}>
-      {rows.map((row) => (
-        <div key={row.id} className={cx("barplot-row", compact && "barplot-row-compact")}>
-          <div className="barplot-label"><span style={{ background: row.gradient }} />{row.label}</div>
-          <div className="barplot-track">
-            <motion.div initial={{ width: 0 }} animate={{ width: row.value ? `${Math.max(3, (row.value / maxValue) * 100)}%` : "0%" }} transition={{ duration: 0.45 }} style={{ background: row.gradient }} />
-            {!compact && row.value > 0 && <em>{row.value} votes</em>}
-          </div>
-          <div className="barplot-percent">{row.percent}%</div>
-        </div>
-      ))}
-      {!compact && <div className="barplot-note">총 응답 선택 수 {answeredTotal}{stats?.missing ? ` · 미응답 ${stats.missing}` : ""}{stats?.unknown ? ` · 매핑 실패 ${stats.unknown}` : ""}</div>}
+                    <p className="mt-2 min-h-4 text-xs font-bold text-slate-400">
+                      {selected !== undefined ? metric.scale[selected] : "미입력"}
+                    </p>
+                  </td>
+                );
+              })}
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }
 
-function DataManager({ participants }) {
-  const [password, setPassword] = useState("");
-  const [unlocked, setUnlocked] = useState(false);
-  const [status, setStatus] = useState("");
-  const [deletingId, setDeletingId] = useState("");
-  const [filter, setFilter] = useState("");
-
-  const visibleParticipants = useMemo(() => {
-    const keyword = filter.trim().toLowerCase();
-    if (!keyword) return participants;
-    return participants.filter((item) => String(item.evaluatorId).toLowerCase().includes(keyword));
-  }, [participants, filter]);
-
-  function tryUnlock(event) {
-    event.preventDefault();
-    if (password === ADMIN_PASSWORD) {
-      setUnlocked(true);
-      setStatus("관리자 패널 잠금 해제됨");
-      return;
-    }
-    setStatus("비밀번호가 맞지 않습니다.");
-  }
-
-  async function removeParticipant(evaluatorId) {
-    const ok = window.confirm(`${evaluatorId} 평가자 데이터 전체를 삭제할까요? 이 작업은 되돌릴 수 없습니다.`);
-    if (!ok) return;
-    setDeletingId(evaluatorId);
-    setStatus("삭제 중...");
-    try {
-      await deleteParticipant(evaluatorId);
-      setStatus(`${evaluatorId} 삭제 완료`);
-    } catch (err) {
-      setStatus(err?.message || "삭제 실패");
-    } finally {
-      setDeletingId("");
-    }
-  }
-
-  async function removeVisibleParticipants() {
-    if (visibleParticipants.length === 0) {
-      setStatus("삭제할 데이터가 없습니다.");
-      return;
-    }
-    const typed = window.prompt(`현재 목록 ${visibleParticipants.length}명을 삭제합니다. 진행하려면 DELETE를 입력하세요.`);
-    if (typed !== "DELETE") {
-      setStatus("일괄 삭제 취소됨");
-      return;
-    }
-    setDeletingId("__bulk__");
-    setStatus("일괄 삭제 중...");
-    try {
-      for (const item of visibleParticipants) await deleteParticipant(item.evaluatorId);
-      setStatus(`${visibleParticipants.length}명 삭제 완료`);
-    } catch (err) {
-      setStatus(err?.message || "일괄 삭제 실패");
-    } finally {
-      setDeletingId("");
-    }
-  }
-
-  async function removeIncompleteParticipants() {
-    const incomplete = participants.filter((item) => !item.completedAt);
-    if (incomplete.length === 0) {
-      setStatus("진행 중 데이터가 없습니다.");
-      return;
-    }
-    const typed = window.prompt(`진행 중 데이터 ${incomplete.length}개를 삭제합니다. 진행하려면 DELETE를 입력하세요.`);
-    if (typed !== "DELETE") {
-      setStatus("진행 중 데이터 삭제 취소됨");
-      return;
-    }
-    setDeletingId("__incomplete__");
-    setStatus("진행 중 데이터 삭제 중...");
-    try {
-      for (const item of incomplete) await deleteParticipant(item.evaluatorId);
-      setStatus(`진행 중 데이터 ${incomplete.length}개 삭제 완료`);
-    } catch (err) {
-      setStatus(err?.message || "진행 중 데이터 삭제 실패");
-    } finally {
-      setDeletingId("");
-    }
-  }
-
+function MobileScoreCards({ question, answers, onScore }) {
   return (
-    <div className="results-card wide admin-card">
-      <div className="card-title"><strong>데이터 관리자</strong><span>평가자 데이터 삭제</span></div>
-      {!unlocked ? (
-        <form onSubmit={tryUnlock} className="admin-unlock-form">
-          <input type="password" value={password} onChange={(event) => setPassword(event.target.value)} placeholder="관리자 비밀번호" />
-          <Button type="submit" variant="secondary">잠금 해제</Button>
-          <div className="admin-compact-note">관리자 비밀번호를 입력하면 삭제 기능이 열립니다.</div>
-          {status && <div className="admin-status">{status}</div>}
-        </form>
-      ) : (
-        <div className="admin-panel">
-          <div className="admin-toolbar">
-            <input value={filter} onChange={(event) => setFilter(event.target.value)} placeholder="평가자 ID 검색" />
-            <Button variant="outline" onClick={removeIncompleteParticipants} disabled={Boolean(deletingId)}>진행 중 삭제</Button>
-            <Button variant="outline" onClick={removeVisibleParticipants} disabled={Boolean(deletingId)}>현재 목록 삭제</Button>
+    <div className="space-y-2 md:hidden">
+      {metrics.map((metric) => (
+        <div key={metric.id} className="rounded-2xl border border-slate-200 bg-white p-2.5 shadow-sm">
+          <div className="mb-2">
+            <h3 className="text-base font-black leading-tight text-slate-950">{metric.label}</h3>
+            <p className="mt-1 text-[10px] font-bold leading-snug text-slate-500">
+              0: {metric.scale[0]} · 1: {metric.scale[1]} · 2: {metric.scale[2]} · 3: {metric.scale[3]}
+            </p>
           </div>
-          {status && <div className="admin-status">{status}</div>}
-          <div className="admin-list">
-            {visibleParticipants.map((item) => {
-              const progress = calcProgress(item.answers || {});
+
+          <div className="space-y-2">
+            {candidateList.map((candidate) => {
+              const selected = answers[question.id]?.[candidate.id]?.[metric.id];
+
               return (
-                <div key={item.evaluatorId} className="admin-row">
-                  <div><strong>{item.evaluatorId}</strong><span>{item.completedAt ? "완료" : "진행 중"}</span></div>
-                  <div>{progress.answered}/{questions.length}</div>
-                  <div>{progress.percent}%</div>
-                  <Button variant="outline" size="sm" onClick={() => removeParticipant(item.evaluatorId)} disabled={Boolean(deletingId)}>
-                    {deletingId === item.evaluatorId ? "삭제 중" : "삭제"}
-                  </Button>
+                <div key={candidate.id} className="rounded-xl bg-slate-50 p-2.5">
+                  <div className="mb-1.5 flex items-center justify-between gap-2">
+                    <p className="text-sm font-black text-slate-800">{candidate.label}</p>
+                    <p className="text-[11px] font-bold text-slate-400">
+                      {selected !== undefined ? `${selected}점 선택됨` : "미입력"}
+                    </p>
+                  </div>
+
+                  <ScoreButtons
+                    selected={selected}
+                    metric={metric}
+                    onSelect={(score) => onScore(question.id, candidate.id, metric.id, score)}
+                  />
                 </div>
               );
             })}
-            {visibleParticipants.length === 0 && <div className="admin-empty">표시할 평가자 데이터가 없습니다.</div>}
           </div>
         </div>
-      )}
+      ))}
     </div>
   );
 }
 
-function ResultsScreen({ participants, dbStatus, dbError, participant, onBack, onNewEvaluator }) {
-  const [selectedEvaluatorId, setSelectedEvaluatorId] = useState("__all__");
-  const [showAdminPanel, setShowAdminPanel] = useState(false);
-
-  const participantOptions = useMemo(
-    () => [...participants].sort((a, b) => String(a.evaluatorId).localeCompare(String(b.evaluatorId), "ko")),
-    [participants]
-  );
-
-  useEffect(() => {
-    if (selectedEvaluatorId === "__all__") return;
-    if (!participants.some((item) => item.evaluatorId === selectedEvaluatorId)) setSelectedEvaluatorId("__all__");
-  }, [participants, selectedEvaluatorId]);
-
-  const selectedParticipant = participants.find((item) => item.evaluatorId === selectedEvaluatorId) || null;
-  const isIndividualView = selectedEvaluatorId !== "__all__";
-  const statsParticipants = isIndividualView && selectedParticipant ? [selectedParticipant] : participants;
-  const stats = useMemo(() => computeStats(statsParticipants, { includeIncomplete: isIndividualView }), [statsParticipants, isIndividualView]);
-  const individualProgress = selectedParticipant ? calcProgress(selectedParticipant.answers || {}) : null;
-  const answerCount = getMethodTotal(stats.overall);
-
+function MetricScoreArea({ question, answers, onScore }) {
   return (
-    <Shell theme="dark">
-      <section className="results-page">
-        <div className="results-head">
-          <div>
-            <div className="eyebrow"><BarChart3 size={16} /> Result Dashboard</div>
-            <h1>평가 결과</h1>
-            <p className="results-subtitle">{isIndividualView ? "선택한 평가자 기준 통계" : "전체 완료 평가자 기준 통계"}</p>
+    <div className="overflow-hidden rounded-[1.25rem] border border-slate-300 bg-white shadow-sm sm:rounded-[1.5rem]">
+      <div className="border-b border-slate-200 bg-white p-2.5 sm:p-5">
+        <div className="grid gap-3 sm:gap-4">
+          <div className="flex items-end justify-between gap-3">
+            <h2 className="text-2xl font-black tracking-tight text-slate-950 sm:text-5xl">
+              {question.sampleTitle}
+            </h2>
+            <p className="hidden text-sm font-bold text-slate-400 sm:block">
+              Input / Candidate comparison
+            </p>
           </div>
-          <div className="results-actions">
-            <DbStatus status={dbStatus} error={dbError} />
-            <Button variant="secondary" onClick={onBack}>설문으로</Button>
-            <Button onClick={onNewEvaluator}>새 평가자</Button>
-            <Button variant="ghost" onClick={() => setShowAdminPanel((value) => !value)}>
-              {showAdminPanel ? "관리자 닫기" : "관리자"}
-            </Button>
-          </div>
+
+          <ImagePreviewRow question={question} />
         </div>
+      </div>
 
-        {showAdminPanel && <DataManager participants={participants} />}
-        {dbError && <div className="error-box">DB 연결 오류: {dbError}</div>}
+      <DesktopScoreTable question={question} answers={answers} onScore={onScore} />
 
-        <div className="results-card wide">
-          <div className="card-title"><strong>보기 방식</strong><span>{isIndividualView ? "평가자 ID별 보기" : "전체 완료 평가자 보기"}</span></div>
-          <div className="result-view-controls">
-            <select value={selectedEvaluatorId} onChange={(event) => setSelectedEvaluatorId(event.target.value)}>
-              <option value="__all__">전체 통계</option>
-              {participantOptions.map((item) => (
-                <option key={item.evaluatorId} value={item.evaluatorId}>{item.evaluatorId}{item.completedAt ? " · 완료" : " · 진행 중"}</option>
-              ))}
-            </select>
+      <div className="bg-slate-50 p-2.5 md:hidden">
+        <MobileScoreCards question={question} answers={answers} onScore={onScore} />
+      </div>
+    </div>
+  );
+}
+
+function StartScreen({ evaluatorId, setEvaluatorId, onStart, onResults, participantCount }) {
+  return (
+    <main className="min-h-screen bg-slate-50 text-slate-950">
+      <div className="h-3 bg-[#0f5d75]" />
+
+      <section className="mx-auto grid max-w-7xl gap-6 px-4 py-6 sm:px-6 lg:grid-cols-[1.08fr_0.92fr] lg:px-8 lg:py-12">
+        <div>
+          <div className="mb-6 flex items-start justify-between gap-4 sm:mb-10">
             <div>
-              {isIndividualView && selectedParticipant
-                ? `${selectedParticipant.evaluatorId}: ${individualProgress?.answered || 0}/${questions.length}문항 응답${selectedParticipant.completedAt ? " · 완료" : " · 진행 중"}`
-                : `완료 평가자 ${stats.completed.length}명 기준으로 집계`}
+              <p className="text-xl font-black tracking-tight text-[#174a5e] sm:text-2xl">
+                Blind Test
+              </p>
+              <h1 className="mt-1 text-3xl font-black tracking-tight text-[#174a5e] sm:text-5xl">
+                영상 평가 기준 수립
+              </h1>
+            </div>
+
+            <div className="hidden text-right text-sm font-semibold text-slate-500 md:block">
+              Medical Artificial
+              <br />
+              Intelligence Laboratory
             </div>
           </div>
+
+          <div className="space-y-5 rounded-[1.5rem] border border-slate-200 bg-white p-4 shadow-sm sm:p-8">
+            {metrics.map((metric, index) => (
+              <div key={metric.id} className="border-b border-slate-100 pb-5 last:border-0 last:pb-0">
+                <h2 className="text-lg font-black leading-snug text-slate-950 sm:text-2xl">
+                  {index + 1}. {metric.full}
+                </h2>
+
+                <p className="mt-1 text-base font-bold leading-snug text-slate-700 sm:text-xl">
+                  (0점: {metric.scale[0]}, 1점: {metric.scale[1]}, 2점: {metric.scale[2]}, 3점: {metric.scale[3]})
+                </p>
+              </div>
+            ))}
+          </div>
         </div>
 
-        <div className="summary-grid">
-          <div className="summary-card"><ShieldCheck size={24} /><span>{isIndividualView ? "선택 평가자" : "완료 평가자"}</span><strong>{isIndividualView ? selectedParticipant?.evaluatorId || "-" : stats.completed.length}</strong></div>
-          <div className="summary-card"><ClipboardList size={24} /><span>총 문항</span><strong>{questions.length}</strong></div>
-          <div className="summary-card"><UserRound size={24} /><span>{isIndividualView ? "응답 문항" : "등록 ID"}</span><strong>{isIndividualView ? individualProgress?.answered || 0 : participants.length}</strong></div>
-          <div className="summary-card"><CheckCircle2 size={24} /><span>선택 수</span><strong>{answerCount}</strong></div>
+        <div className="self-center rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-xl shadow-slate-200/70 sm:rounded-[2rem] sm:p-7">
+          <div className="mb-6 inline-flex items-center gap-2 rounded-full bg-[#eaf4f7] px-4 py-2 text-sm font-extrabold text-[#0f5d75]">
+            <ClipboardCheck size={16} />
+            Metric-based Blind Evaluation
+          </div>
+
+          <h2 className="text-2xl font-black tracking-tight text-slate-950 sm:text-3xl">
+            3 Candidates × 5 Metrics
+          </h2>
+
+          <p className="mt-3 text-base leading-7 text-slate-600">
+            Input 이미지를 기준으로 Candidate 1, 2, 3의 품질을 항목별로 0~3점 평가함.
+          </p>
+
+          <div className="mt-7 grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <div className="rounded-2xl bg-slate-50 p-4 text-center">
+              <p className="text-3xl font-black">{questions.length}</p>
+              <p className="mt-1 text-xs font-bold text-slate-500">평가 샘플</p>
+            </div>
+
+            <div className="rounded-2xl bg-slate-50 p-4 text-center">
+              <p className="text-3xl font-black">3</p>
+              <p className="mt-1 text-xs font-bold text-slate-500">Candidates</p>
+            </div>
+
+            <div className="rounded-2xl bg-slate-50 p-4 text-center">
+              <p className="text-3xl font-black">{metrics.length}</p>
+              <p className="mt-1 text-xs font-bold text-slate-500">평가 항목</p>
+            </div>
+          </div>
+
+          <div className="mt-5 rounded-2xl bg-slate-50 p-4 text-sm font-bold text-slate-600">
+            저장 모드: {isFirebaseEnabled ? "Firebase Firestore" : "localStorage"} · 등록 평가자 {participantCount}명
+          </div>
+
+          <label className="mt-6 block text-sm font-extrabold text-slate-700">평가자 ID</label>
+
+          <input
+            value={evaluatorId}
+            onChange={(event) => setEvaluatorId(event.target.value)}
+            placeholder="예: rater_01"
+            className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4 text-lg font-bold outline-none transition focus:border-[#0f5d75] focus:bg-white"
+          />
+
+          <button
+            onClick={onStart}
+            className="mt-4 flex w-full items-center justify-center gap-2 rounded-2xl bg-[#0f5d75] px-5 py-4 text-lg font-black text-white shadow-lg shadow-[#0f5d75]/20"
+          >
+            평가 시작 <ChevronRight size={20} />
+          </button>
+
+          <button
+            onClick={onResults}
+            className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-4 text-base font-black text-slate-700"
+          >
+            <BarChart3 size={18} />
+            결과 대시보드 미리보기
+          </button>
+        </div>
+      </section>
+    </main>
+  );
+}
+
+function EvaluationScreen({
+  evaluatorId,
+  answers,
+  setAnswers,
+  onResults,
+  onReset,
+  onParticipantAnswers,
+}) {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isSaving, setIsSaving] = useState(false);
+  const question = questions[currentIndex];
+
+  const totalScores = questions.length * candidateList.length * metrics.length;
+  const savedScores = countAllScores(answers);
+  const progress = Math.round((savedScores / totalScores) * 100);
+  const currentComplete = countQuestionScores(answers[question.id]);
+  const currentTotal = candidateList.length * metrics.length;
+
+  const onScore = async (questionId, candidateId, metricId, score) => {
+    const nextAnswers = {
+      ...answers,
+      [questionId]: {
+        ...(answers[questionId] || {}),
+        [candidateId]: {
+          ...((answers[questionId] || {})[candidateId] || {}),
+          [metricId]: score,
+        },
+      },
+    };
+
+    setAnswers(nextAnswers);
+    onParticipantAnswers(nextAnswers);
+
+    try {
+      setIsSaving(true);
+      await saveMetricScore({
+        evaluatorId,
+        questionId,
+        candidateId,
+        metricId,
+        score,
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const goToQuestion = async (nextIndex) => {
+    if (nextIndex >= questions.length) {
+      await markParticipantComplete(evaluatorId);
+      onResults();
+      return;
+    }
+
+    setCurrentIndex(nextIndex);
+    window.requestAnimationFrame(() => {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+  };
+
+  return (
+    <main className="min-h-screen bg-slate-50 text-slate-900">
+      <div className="sticky top-0 z-20 border-b border-slate-200 bg-white/95 backdrop-blur">
+        <div className="mx-auto flex max-w-7xl flex-col items-stretch justify-between gap-3 px-3 py-3 sm:flex-row sm:items-center sm:px-6 sm:py-4">
+          <div>
+            <p className="text-[11px] font-black uppercase tracking-[0.22em] text-[#0f5d75] sm:text-xs">
+              Metric Blind Test
+            </p>
+
+            <h1 className="text-2xl font-black text-slate-950 sm:text-3xl">
+              {question.sampleTitle}
+            </h1>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+            <div className="rounded-2xl bg-slate-50 px-3 py-2 text-xs font-black text-slate-600 sm:px-4 sm:py-3 sm:text-sm">
+              전체 {progress}% 완료
+            </div>
+
+            <div className="rounded-2xl bg-slate-50 px-3 py-2 text-xs font-black text-slate-600 sm:px-4 sm:py-3 sm:text-sm">
+              현재 {currentComplete}/{currentTotal}
+            </div>
+
+            <div className="rounded-2xl bg-slate-50 px-3 py-2 text-xs font-black text-slate-500 sm:px-4 sm:py-3 sm:text-sm">
+              {isSaving ? "저장 중" : "저장됨"}
+            </div>
+
+            <button
+              onClick={onResults}
+              className="rounded-2xl bg-slate-950 px-4 py-3 text-sm font-black text-white"
+            >
+              결과 보기
+            </button>
+
+            <button
+              onClick={onReset}
+              className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-black text-slate-600"
+            >
+              <RotateCcw size={16} />
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <section className="mx-auto max-w-7xl px-2 py-2 sm:px-6 sm:py-6">
+        <MetricScoreArea question={question} answers={answers} onScore={onScore} />
+
+        <div className="mt-5 flex items-center justify-between pb-24 sm:justify-end sm:gap-3 sm:pb-0">
+          <button
+            onClick={() => goToQuestion(Math.max(0, currentIndex - 1))}
+            className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-3 font-black text-slate-700 disabled:opacity-40"
+            disabled={currentIndex === 0}
+          >
+            <ChevronLeft size={18} />
+            이전
+          </button>
+
+          <button
+            onClick={() => goToQuestion(currentIndex + 1)}
+            className="fixed bottom-5 right-5 z-30 flex items-center gap-2 rounded-2xl bg-[#0f5d75] px-6 py-4 font-black text-white shadow-xl shadow-[#0f5d75]/25 disabled:opacity-40 sm:static sm:px-5 sm:py-3"
+          >
+            {currentIndex === questions.length - 1 ? "완료" : "다음"}
+            <ChevronRight size={18} />
+          </button>
+        </div>
+      </section>
+    </main>
+  );
+}
+
+function aggregate(participants) {
+  const modelMetric = {};
+  methods.forEach((method) => {
+    modelMetric[method] = {};
+    metrics.forEach((metric) => {
+      modelMetric[method][metric.id] = [];
+    });
+  });
+
+  participants.forEach((participant) => {
+    questions.forEach((question) => {
+      candidateList.forEach((candidate) => {
+        const method = answerKey[question.id][candidate.id];
+
+        metrics.forEach((metric) => {
+          const value = participant.answers?.[question.id]?.[candidate.id]?.[metric.id];
+          if (typeof value === "number") {
+            modelMetric[method][metric.id].push(value);
+          }
+        });
+      });
+    });
+  });
+
+  const avg = (arr) => (arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0);
+
+  return {
+    totalByModel: methods.map((method) => {
+      const allScores = metrics.flatMap((metric) => modelMetric[method][metric.id]);
+      return { method, average: avg(allScores), count: allScores.length };
+    }),
+    metricRows: metrics.map((metric) => ({
+      metric,
+      scores: methods.map((method) => ({
+        method,
+        average: avg(modelMetric[method][metric.id]),
+        count: modelMetric[method][metric.id].length,
+      })),
+    })),
+  };
+}
+
+function ScoreBar({ value }) {
+  const width = `${Math.max(0, Math.min(100, (value / 3) * 100))}%`;
+
+  return (
+    <div className="h-3 overflow-hidden rounded-full bg-slate-100">
+      <div className="h-full rounded-full bg-[#0f5d75]" style={{ width }} />
+    </div>
+  );
+}
+
+function ResultsScreen({ participants, currentEvaluatorId, currentAnswers, onBack }) {
+  const [scope, setScope] = useState("all");
+
+  const currentParticipant = {
+    evaluatorId: currentEvaluatorId || "current_rater",
+    answers: currentAnswers || {},
+  };
+
+  const sourceParticipants = scope === "current" ? [currentParticipant] : participants;
+  const result = useMemo(() => aggregate(sourceParticipants), [sourceParticipants]);
+  const sortedTotal = [...result.totalByModel].sort((a, b) => b.average - a.average);
+
+  return (
+    <main className="min-h-screen bg-slate-50 text-slate-900">
+      <div className="h-3 bg-[#0f5d75]" />
+
+      <section className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8">
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.25em] text-[#0f5d75]">
+              Result Dashboard
+            </p>
+
+            <h1 className="text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">
+              모델별 세부 평가 집계
+            </h1>
+
+            <p className="mt-2 text-sm font-bold text-slate-500">
+              집계 대상 평가자 {sourceParticipants.length}명 · 저장 모드 {isFirebaseEnabled ? "Firebase" : "localStorage"}
+            </p>
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={() => setScope("all")}
+              className={cn(
+                "rounded-2xl px-4 py-3 text-sm font-black",
+                scope === "all" ? "bg-slate-950 text-white" : "bg-white text-slate-600"
+              )}
+            >
+              전체 응답
+            </button>
+
+            <button
+              onClick={() => setScope("current")}
+              className={cn(
+                "rounded-2xl px-4 py-3 text-sm font-black",
+                scope === "current" ? "bg-slate-950 text-white" : "bg-white text-slate-600"
+              )}
+            >
+              현재 응답만
+            </button>
+
+            <button
+              onClick={onBack}
+              className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-black text-slate-600"
+            >
+              평가로 돌아가기
+            </button>
+          </div>
         </div>
 
-        <div className="results-card wide">
-          <div className="card-title"><strong>{isIndividualView ? "개별 전체 통계" : "전체 통계"}</strong><span>{isIndividualView ? selectedParticipant?.evaluatorId : "모든 Phase 합산"}</span></div>
-          <BarPlot stats={stats.overall} />
-        </div>
+        <div className="grid gap-5 lg:grid-cols-3">
+          {sortedTotal.map((item, index) => (
+            <div
+              key={item.method}
+              className="rounded-[1.75rem] border border-slate-200 bg-white p-5 shadow-sm"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-xs font-black uppercase tracking-wider text-slate-400">
+                    Rank {index + 1}
+                  </p>
 
-        <div className="phase-results-grid">
-          {phaseConfig.map((phase) => (
-            <div key={phase.id} className="results-card">
-              <div className="card-title"><strong>{phase.label}</strong><span>{phase.count}문항 · {phase.subtitle}</span></div>
-              <BarPlot stats={stats.byPhase[phase.id]} />
+                  <h2 className="mt-1 text-2xl font-black text-slate-950">
+                    {item.method}
+                  </h2>
+                </div>
+
+                {index === 0 ? (
+                  <Trophy className="text-[#0f5d75]" />
+                ) : (
+                  <BarChart3 className="text-slate-300" />
+                )}
+              </div>
+
+              <p className="mt-6 text-5xl font-black tracking-tight text-slate-950">
+                {item.average.toFixed(2)}
+              </p>
+
+              <p className="mt-1 text-sm font-bold text-slate-500">
+                / 3.00 · {item.count} scores
+              </p>
+
+              <div className="mt-5">
+                <ScoreBar value={item.average} />
+              </div>
             </div>
           ))}
         </div>
 
-        <div className="results-card wide">
-          <div className="card-title"><strong>문항별 통계</strong><span>각 케이스의 method별 분포</span></div>
-          <div className="question-results-list">
-            {questions.map((question) => (
-              <div key={question.id} className="question-result-row">
-                <div><strong>{question.id}</strong><span>{getPhase(question.phase).label}</span></div>
-                <BarPlot stats={stats.byQuestion[question.id]} compact />
-              </div>
-            ))}
+        <div className="mt-6 grid gap-6 xl:grid-cols-[1fr_0.9fr]">
+          <div className="rounded-[1.75rem] border border-slate-200 bg-white p-5 shadow-sm">
+            <div className="mb-5 flex items-center gap-2 text-lg font-black text-slate-950">
+              <ClipboardCheck size={20} />
+              평가 항목별 평균 점수
+            </div>
+
+            <div className="space-y-5">
+              {result.metricRows.map((row) => (
+                <div key={row.metric.id} className="rounded-2xl border border-slate-100 p-4">
+                  <h3 className="text-base font-black text-slate-950">
+                    {row.metric.label}
+                  </h3>
+
+                  <div className="mt-4 space-y-3">
+                    {row.scores.map((score) => (
+                      <div
+                        key={score.method}
+                        className="grid grid-cols-[92px_1fr_50px] items-center gap-2 sm:grid-cols-[130px_1fr_60px] sm:gap-3"
+                      >
+                        <p className="truncate text-sm font-black text-slate-700">
+                          {score.method}
+                        </p>
+
+                        <ScoreBar value={score.average} />
+
+                        <p className="text-right text-sm font-black text-slate-950">
+                          {score.average.toFixed(2)}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="rounded-[1.75rem] border border-slate-200 bg-white p-5 shadow-sm">
+            <div className="mb-5 flex items-center gap-2 text-lg font-black text-slate-950">
+              <Eye size={20} />
+              항목별 모델 점수 나열
+            </div>
+
+            <div className="space-y-4">
+              {result.metricRows.map((row) => {
+                const ranking = [...row.scores].sort((a, b) => b.average - a.average);
+
+                return (
+                  <div key={row.metric.id} className="rounded-2xl bg-slate-50 p-4">
+                    <p className="mb-3 text-sm font-black text-slate-700">
+                      {row.metric.label}
+                    </p>
+
+                    <div className="space-y-2">
+                      {ranking.map((score, index) => (
+                        <div
+                          key={score.method}
+                          className="flex items-center justify-between rounded-xl bg-white px-3 py-2 ring-1 ring-slate-100"
+                        >
+                          <div className="flex items-center gap-3">
+                            <span
+                              className={cn(
+                                "grid h-7 w-7 place-items-center rounded-full text-xs font-black",
+                                index === 0
+                                  ? "bg-[#0f5d75] text-white"
+                                  : "bg-slate-100 text-slate-500"
+                              )}
+                            >
+                              {index + 1}
+                            </span>
+
+                            <span className="text-sm font-black text-slate-800">
+                              {score.method}
+                            </span>
+                          </div>
+
+                          <span className="text-sm font-black text-slate-950">
+                            {score.average.toFixed(2)}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
       </section>
-    </Shell>
+    </main>
   );
 }
 
 export default function App() {
-  const [participants, setParticipants] = useState([]);
-  const [participant, setParticipant] = useState(null);
   const [screen, setScreen] = useState("start");
-  const [dbStatus, setDbStatus] = useState("connecting");
-  const [dbError, setDbError] = useState("");
+  const [evaluatorId, setEvaluatorId] = useState("");
+  const [answers, setAnswers] = useState({});
+  const [participants, setParticipants] = useState([]);
 
   useEffect(() => {
-    setDbStatus("connecting");
-    const unsubscribe = listenAllParticipants(
-      (items) => {
-        const normalized = items.map(normalizeParticipant).filter(Boolean);
-        setParticipants(normalized);
-        setDbStatus("connected");
-        setDbError("");
-        setParticipant((current) => {
-          if (!current?.evaluatorId) return current;
-          const latest = normalized.find((item) => item.evaluatorId === current.evaluatorId);
-          return latest ? { ...current, ...latest, answers: latest.answers || current.answers || {} } : current;
-        });
-      },
-      (error) => {
-        setDbStatus("error");
-        setDbError(error?.message || "Firestore 연결에 실패했습니다.");
-      }
-    );
+    const unsubscribe = subscribeParticipants((items) => {
+      setParticipants(items);
+    });
 
     return () => unsubscribe?.();
   }, []);
 
-  async function start(evaluatorId) {
-    const nextParticipant = await createParticipant(evaluatorId);
-    const normalized = normalizeParticipant(nextParticipant);
-    setParticipant(normalized);
-    setScreen("survey");
-    return normalized;
-  }
+  const startEvaluation = async () => {
+    const cleanId = evaluatorId.trim();
 
-  function newEvaluator() {
-    setParticipant(null);
-    setScreen("start");
-  }
-
-  async function restartCurrent() {
-    if (!participant) {
-      newEvaluator();
+    if (!cleanId) {
+      alert("평가자 ID를 입력해주세요.");
       return;
     }
-    const confirmDelete = window.confirm("현재 평가자 ID와 응답을 삭제하고 처음으로 돌아갈까요?");
-    if (!confirmDelete) return;
-    try {
-      await deleteParticipant(participant.evaluatorId);
-    } catch (err) {
-      alert(err?.message || "평가자 삭제에 실패했습니다.");
-      return;
-    }
-    setParticipant(null);
+
+    const participant = await loadOrCreateParticipant(cleanId);
+    setAnswers(participant.answers || {});
+    setScreen("eval");
+  };
+
+  const updateParticipantAnswers = (nextAnswers) => {
+    setParticipants((prev) => {
+      const key = String(evaluatorId || "").trim().replace(/\s+/g, "_").toLowerCase();
+      const existingIndex = prev.findIndex((item) => item.evaluatorKey === encodeURIComponent(key));
+
+      if (existingIndex < 0) return prev;
+
+      const next = [...prev];
+      next[existingIndex] = {
+        ...next[existingIndex],
+        answers: nextAnswers,
+      };
+      return next;
+    });
+  };
+
+  const reset = () => {
+    const ok = window.confirm("현재 화면의 입력 상태만 초기화할까요? 이미 저장된 서버/localStorage 데이터는 유지됩니다.");
+    if (!ok) return;
+    setAnswers({});
     setScreen("start");
+  };
+
+  if (screen === "start") {
+    return (
+      <StartScreen
+        evaluatorId={evaluatorId}
+        setEvaluatorId={setEvaluatorId}
+        onStart={startEvaluation}
+        onResults={() => setScreen("results")}
+        participantCount={participants.length}
+      />
+    );
   }
 
-  if (screen === "stats") {
-    return <ResultsScreen participants={participants} dbStatus={dbStatus} dbError={dbError} participant={participant} onBack={() => setScreen(participant ? "survey" : "start")} onNewEvaluator={newEvaluator} />;
+  if (screen === "results") {
+    return (
+      <ResultsScreen
+        participants={participants}
+        currentEvaluatorId={evaluatorId}
+        currentAnswers={answers}
+        onBack={() => setScreen(evaluatorId ? "eval" : "start")}
+      />
+    );
   }
 
-  if (screen === "survey" && participant) {
-    return <SurveyScreen participant={participant} setParticipant={setParticipant} onShowStats={() => setScreen("stats")} onRestart={restartCurrent} />;
-  }
-
-  return <StartScreen participants={participants} dbStatus={dbStatus} dbError={dbError} onStart={start} onShowResults={() => setScreen("stats")} />;
+  return (
+    <EvaluationScreen
+      evaluatorId={evaluatorId.trim()}
+      answers={answers}
+      setAnswers={setAnswers}
+      onResults={() => setScreen("results")}
+      onReset={reset}
+      onParticipantAnswers={updateParticipantAnswers}
+    />
+  );
 }

@@ -2,121 +2,189 @@ import {
   collection,
   deleteDoc,
   doc,
-  getDocs,
+  getDoc,
   onSnapshot,
-  runTransaction,
   serverTimestamp,
   setDoc,
   updateDoc,
 } from "firebase/firestore";
-import { db } from "./firebase";
+import { db, isFirebaseEnabled } from "./firebase";
 
-export const SURVEY_ID = "medison-2026-v1";
+export const SURVEY_ID = "medison-metric-2026-v1";
 
-export function normalizeEvaluatorId(input) {
-  return String(input || "").trim().replace(/\s+/g, " ");
+const LOCAL_KEY = `${SURVEY_ID}:participants`;
+
+export function makeEvaluatorKey(evaluatorId) {
+  return encodeURIComponent(String(evaluatorId || "anonymous").trim().replace(/\s+/g, "_").toLowerCase());
 }
 
-export function validateEvaluatorId(input) {
-  const id = normalizeEvaluatorId(input);
+function participantCollectionRef() {
+  return collection(db, "surveys", SURVEY_ID, "participants");
+}
 
-  if (!id) {
-    return "평가자 ID를 입력하세요.";
+function participantDocRef(evaluatorKey) {
+  return doc(db, "surveys", SURVEY_ID, "participants", evaluatorKey);
+}
+
+function readLocalParticipants() {
+  try {
+    const raw = localStorage.getItem(LOCAL_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
   }
-
-  if (id.length > 80) {
-    return "평가자 ID는 80자 이하로 입력하세요.";
-  }
-
-  return "";
 }
 
-function evaluatorDocId(evaluatorId) {
-  return encodeURIComponent(normalizeEvaluatorId(evaluatorId).toLowerCase());
+function writeLocalParticipants(participants) {
+  localStorage.setItem(LOCAL_KEY, JSON.stringify(participants));
+  window.dispatchEvent(new Event("medison-local-participants-updated"));
 }
 
-function participantRef(evaluatorId) {
-  return doc(db, "surveys", SURVEY_ID, "participants", evaluatorDocId(evaluatorId));
+function nowIso() {
+  return new Date().toISOString();
 }
 
+export async function loadOrCreateParticipant(evaluatorId) {
+  const evaluatorKey = makeEvaluatorKey(evaluatorId);
 
-export async function createParticipant(evaluatorId) {
-  const id = normalizeEvaluatorId(evaluatorId);
-  const validationError = validateEvaluatorId(id);
+  if (isFirebaseEnabled) {
+    const ref = participantDocRef(evaluatorKey);
+    const snapshot = await getDoc(ref);
 
-  if (validationError) {
-    throw new Error(validationError);
-  }
-
-  const ref = participantRef(id);
-
-  await runTransaction(db, async (transaction) => {
-    const snap = await transaction.get(ref);
-
-    if (snap.exists()) {
-      throw new Error("이미 사용된 평가자 ID입니다. 다른 ID를 입력하세요.");
+    if (snapshot.exists()) {
+      return { evaluatorKey, ...snapshot.data() };
     }
 
-    transaction.set(ref, {
-      evaluatorId: id,
-      evaluatorKey: evaluatorDocId(id),
+    const participant = {
+      evaluatorId,
+      evaluatorKey,
       answers: {},
-      completedAt: null,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
-    });
-  });
+      completedAt: null,
+    };
 
-  return {
-    evaluatorId: id,
+    await setDoc(ref, participant);
+    return { ...participant, createdAt: null, updatedAt: null };
+  }
+
+  const participants = readLocalParticipants();
+  const existing = participants.find((item) => item.evaluatorKey === evaluatorKey);
+
+  if (existing) return existing;
+
+  const participant = {
+    evaluatorId,
+    evaluatorKey,
     answers: {},
+    createdAt: nowIso(),
+    updatedAt: nowIso(),
     completedAt: null,
+  };
+
+  writeLocalParticipants([...participants, participant]);
+  return participant;
+}
+
+export async function saveMetricScore({ evaluatorId, questionId, candidateId, metricId, score }) {
+  const evaluatorKey = makeEvaluatorKey(evaluatorId);
+
+  if (isFirebaseEnabled) {
+    const ref = participantDocRef(evaluatorKey);
+    await setDoc(
+      ref,
+      {
+        evaluatorId,
+        evaluatorKey,
+        answers: {
+          [questionId]: {
+            [candidateId]: {
+              [metricId]: score,
+            },
+          },
+        },
+        updatedAt: serverTimestamp(),
+      },
+      { merge: true }
+    );
+    return;
+  }
+
+  const participants = readLocalParticipants();
+  const index = participants.findIndex((item) => item.evaluatorKey === evaluatorKey);
+
+  const participant =
+    index >= 0
+      ? participants[index]
+      : {
+          evaluatorId,
+          evaluatorKey,
+          answers: {},
+          createdAt: nowIso(),
+          completedAt: null,
+        };
+
+  participant.answers = participant.answers || {};
+  participant.answers[questionId] = participant.answers[questionId] || {};
+  participant.answers[questionId][candidateId] = participant.answers[questionId][candidateId] || {};
+  participant.answers[questionId][candidateId][metricId] = score;
+  participant.updatedAt = nowIso();
+
+  if (index >= 0) participants[index] = participant;
+  else participants.push(participant);
+
+  writeLocalParticipants(participants);
+}
+
+export async function markParticipantComplete(evaluatorId) {
+  const evaluatorKey = makeEvaluatorKey(evaluatorId);
+
+  if (isFirebaseEnabled) {
+    await updateDoc(participantDocRef(evaluatorKey), {
+      completedAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    });
+    return;
+  }
+
+  const participants = readLocalParticipants();
+  const index = participants.findIndex((item) => item.evaluatorKey === evaluatorKey);
+  if (index >= 0) {
+    participants[index].completedAt = nowIso();
+    participants[index].updatedAt = nowIso();
+    writeLocalParticipants(participants);
+  }
+}
+
+export function subscribeParticipants(callback) {
+  if (isFirebaseEnabled) {
+    return onSnapshot(participantCollectionRef(), (snapshot) => {
+      const participants = snapshot.docs.map((item) => ({
+        evaluatorKey: item.id,
+        ...item.data(),
+      }));
+      callback(participants);
+    });
+  }
+
+  const emit = () => callback(readLocalParticipants());
+  emit();
+
+  window.addEventListener("medison-local-participants-updated", emit);
+  window.addEventListener("storage", emit);
+
+  return () => {
+    window.removeEventListener("medison-local-participants-updated", emit);
+    window.removeEventListener("storage", emit);
   };
 }
 
-export async function saveAnswer(evaluatorId, questionId, choiceId) {
-  await updateDoc(participantRef(evaluatorId), {
-    [`answers.${questionId}`]: choiceId,
-    updatedAt: serverTimestamp(),
-  });
-}
+export async function deleteParticipant(evaluatorKey) {
+  if (isFirebaseEnabled) {
+    await deleteDoc(participantDocRef(evaluatorKey));
+    return;
+  }
 
-export async function completeParticipant(evaluatorId) {
-  await updateDoc(participantRef(evaluatorId), {
-    completedAt: serverTimestamp(),
-    updatedAt: serverTimestamp(),
-  });
-}
-
-export async function saveParticipantSnapshot(participant) {
-  await setDoc(
-    participantRef(participant.evaluatorId),
-    {
-      ...participant,
-      updatedAt: serverTimestamp(),
-    },
-    { merge: true }
-  );
-}
-
-export async function deleteParticipant(evaluatorId) {
-  await deleteDoc(participantRef(evaluatorId));
-}
-
-export async function loadAllParticipants() {
-  const ref = collection(db, "surveys", SURVEY_ID, "participants");
-  const snap = await getDocs(ref);
-  return snap.docs.map((item) => item.data());
-}
-
-export function listenAllParticipants(callback, onError) {
-  const ref = collection(db, "surveys", SURVEY_ID, "participants");
-
-  return onSnapshot(
-    ref,
-    (snap) => {
-      callback(snap.docs.map((item) => item.data()));
-    },
-    onError
-  );
+  const participants = readLocalParticipants().filter((item) => item.evaluatorKey !== evaluatorKey);
+  writeLocalParticipants(participants);
 }

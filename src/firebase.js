@@ -2,14 +2,22 @@ import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyCHJbnpdddGNwgX5s22CdMnXxxuiSNgAqw",
-  authDomain: "yonsei-medison-blind-test.firebaseapp.com",
-  projectId: "yonsei-medison-blind-test",
-  storageBucket: "yonsei-medison-blind-test.firebasestorage.app",
-  messagingSenderId: "1012605780299",
-  appId: "1:1012605780299:web:7d0fc60ad6564f8aa568ce",
-  measurementId: "G-VQC792CRZG"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
-const app = initializeApp(firebaseConfig);
 
-export const db = getFirestore(app);
+const hasFirebaseConfig = Boolean(
+  firebaseConfig.apiKey &&
+  firebaseConfig.authDomain &&
+  firebaseConfig.projectId &&
+  firebaseConfig.appId
+);
+
+export const isFirebaseEnabled = hasFirebaseConfig;
+
+export const firebaseApp = hasFirebaseConfig ? initializeApp(firebaseConfig) : null;
+export const db = hasFirebaseConfig ? getFirestore(firebaseApp) : null;
