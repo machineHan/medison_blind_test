@@ -8,18 +8,67 @@ import {
   RotateCcw,
   Trophy,
 } from 'lucide-react';
+import { isFirebaseEnabled } from './firebase';
+import {
+  loadOrCreateParticipant,
+  markParticipantComplete,
+  saveMetricScore,
+  subscribeParticipants,
+} from './surveyDb';
 
-const sampleTitles = [
-  '3VT 01', '3VT 02', '3VT 03', '3VT 04', '3VT 05', '3VT 06',
-  '3VV 01', '3VV 02', '3VV 03', '3VV 04', '3VV 05', '3VV 06', '3VV 07', '3VV 08', '3VV 09',
-  '4CH 01', '4CH 02', '4CH 03', '4CH 04', '4CH 05', '4CH 06', '4CH 07', '4CH 08',
-  'LVOT 01', 'LVOT 02', 'LVOT 03', 'LVOT 04', 'LVOT 05', 'LVOT 06',
-  'RVOT 01', 'RVOT 02', 'RVOT 03', 'RVOT 04', 'RVOT 05', 'RVOT 06',
-  'AA 01', 'AA 02', 'AA 03', 'AA 04', 'AA 05', 'AA 06', 'AA 07', 'AA 08',
-  'DA 01', 'DA 02', 'DA 03', 'DA 04',
-];
-
-const methods = ['score', 'ddib', 'flow'];
+const questions = [
+  { sampleTitle: '3VT 01', file: 'N0029_NM3_3VT_s512_z100_c0_h0.png', candidate_1: 'ddib', candidate_2: 'score', candidate_3: 'flow' },
+  { sampleTitle: '3VT 02', file: 'N0190_NM13_3VT_s512_z100_c0_h0.png', candidate_1: 'ddib', candidate_2: 'score', candidate_3: 'flow' },
+  { sampleTitle: '3VT 03', file: 'N0215_EX2_3VT_s512_z100_c0_h0.png', candidate_1: 'flow', candidate_2: 'score', candidate_3: 'ddib' },
+  { sampleTitle: '3VT 04', file: 'N0216_GD5_3VT_s512_z100_c0_h0.png', candidate_1: 'ddib', candidate_2: 'score', candidate_3: 'flow' },
+  { sampleTitle: '3VT 05', file: 'N0257_EX5_3VT_s512_z100_c0_h0.png', candidate_1: 'ddib', candidate_2: 'score', candidate_3: 'flow' },
+  { sampleTitle: '3VT 06', file: 'N0268_GD9_3VT_s512_z100_c0_h0.png', candidate_1: 'score', candidate_2: 'flow', candidate_3: 'ddib' },
+  { sampleTitle: '3VV 01', file: 'N0029_NM3_3VV_s512_z100_c0_h0.png', candidate_1: 'ddib', candidate_2: 'score', candidate_3: 'flow' },
+  { sampleTitle: '3VV 02', file: 'N0111_NM8_3VV_s512_z100_c0_h0.png', candidate_1: 'flow', candidate_2: 'ddib', candidate_3: 'score' },
+  { sampleTitle: '3VV 03', file: 'N0190_NM13_3VV2_s512_z100_c0_h0.png', candidate_1: 'ddib', candidate_2: 'score', candidate_3: 'flow' },
+  { sampleTitle: '3VV 04', file: 'N0190_NM13_3VV_s512_z100_c0_h0.png', candidate_1: 'ddib', candidate_2: 'score', candidate_3: 'flow' },
+  { sampleTitle: '3VV 05', file: 'N0215_EX2_3VV2_s512_z100_c0_h0.png', candidate_1: 'flow', candidate_2: 'score', candidate_3: 'ddib' },
+  { sampleTitle: '3VV 06', file: 'N0215_EX2_3VV_s512_z100_c0_h0.png', candidate_1: 'flow', candidate_2: 'score', candidate_3: 'ddib' },
+  { sampleTitle: '3VV 07', file: 'N0216_GD5_3VV_s512_z100_c0_h0.png', candidate_1: 'score', candidate_2: 'ddib', candidate_3: 'flow' },
+  { sampleTitle: '3VV 08', file: 'N0257_EX5_3VV_s512_z100_c0_h0.png', candidate_1: 'score', candidate_2: 'ddib', candidate_3: 'flow' },
+  { sampleTitle: '3VV 09', file: 'N0268_GD9_3VV_s512_z100_c0_h0.png', candidate_1: 'flow', candidate_2: 'ddib', candidate_3: 'score' },
+  { sampleTitle: '4CH 01', file: 'N0020_NM2_4CH_s512_z100_c0_h0.png', candidate_1: 'score', candidate_2: 'ddib', candidate_3: 'flow' },
+  { sampleTitle: '4CH 02', file: 'N0029_NM3_4CH_s512_z100_c0_h0.png', candidate_1: 'score', candidate_2: 'ddib', candidate_3: 'flow' },
+  { sampleTitle: '4CH 03', file: 'N0111_NM8_4CH_s512_z100_c0_h0.png', candidate_1: 'score', candidate_2: 'flow', candidate_3: 'ddib' },
+  { sampleTitle: '4CH 04', file: 'N0190_NM13_4CH_s512_z100_c0_h0.png', candidate_1: 'ddib', candidate_2: 'score', candidate_3: 'flow' },
+  { sampleTitle: '4CH 05', file: 'N0215_EX2_4CH_s512_z100_c0_h0.png', candidate_1: 'score', candidate_2: 'flow', candidate_3: 'ddib' },
+  { sampleTitle: '4CH 06', file: 'N0216_GD5_4CH_s512_z100_c0_h0.png', candidate_1: 'score', candidate_2: 'ddib', candidate_3: 'flow' },
+  { sampleTitle: '4CH 07', file: 'N0257_EX5_4CH_s512_z100_c0_h0.png', candidate_1: 'score', candidate_2: 'flow', candidate_3: 'ddib' },
+  { sampleTitle: '4CH 08', file: 'N0268_GD9_4CH_s512_z100_c0_h0.png', candidate_1: 'ddib', candidate_2: 'score', candidate_3: 'flow' },
+  { sampleTitle: 'LVOT 01', file: 'N0020_NM2_LVOT_s512_z100_c0_h0.png', candidate_1: 'ddib', candidate_2: 'flow', candidate_3: 'score' },
+  { sampleTitle: 'LVOT 02', file: 'N0190_NM13_LVOT_s512_z100_c0_h0.png', candidate_1: 'score', candidate_2: 'ddib', candidate_3: 'flow' },
+  { sampleTitle: 'LVOT 03', file: 'N0215_EX2_LVOT_s512_z100_c0_h0.png', candidate_1: 'score', candidate_2: 'ddib', candidate_3: 'flow' },
+  { sampleTitle: 'LVOT 04', file: 'N0216_GD5_LVOT_s512_z100_c0_h0.png', candidate_1: 'ddib', candidate_2: 'score', candidate_3: 'flow' },
+  { sampleTitle: 'LVOT 05', file: 'N0257_EX5_LVOT_s512_z100_c0_h0.png', candidate_1: 'flow', candidate_2: 'ddib', candidate_3: 'score' },
+  { sampleTitle: 'LVOT 06', file: 'N0268_GD9_LVOT_s512_z100_c0_h0.png', candidate_1: 'score', candidate_2: 'flow', candidate_3: 'ddib' },
+  { sampleTitle: 'RVOT 01', file: 'N0020_NM2_RVOT_s512_z100_c0_h0.png', candidate_1: 'flow', candidate_2: 'ddib', candidate_3: 'score' },
+  { sampleTitle: 'RVOT 02', file: 'N0111_NM8_RVOT_s512_z100_c0_h0.png', candidate_1: 'ddib', candidate_2: 'flow', candidate_3: 'score' },
+  { sampleTitle: 'RVOT 03', file: 'N0215_EX2_RVOT_s512_z100_c0_h0.png', candidate_1: 'flow', candidate_2: 'score', candidate_3: 'ddib' },
+  { sampleTitle: 'RVOT 04', file: 'N0257_EX5_RVOT2_s512_z100_c0_h0.png', candidate_1: 'ddib', candidate_2: 'score', candidate_3: 'flow' },
+  { sampleTitle: 'RVOT 05', file: 'N0257_EX5_RVOT_s512_z100_c0_h0.png', candidate_1: 'ddib', candidate_2: 'flow', candidate_3: 'score' },
+  { sampleTitle: 'RVOT 06', file: 'N0268_GD9_RVOT_s512_z100_c0_h0.png', candidate_1: 'flow', candidate_2: 'ddib', candidate_3: 'score' },
+  { sampleTitle: 'AA 01', file: 'N0020_NM2_AA_s512_z100_c0_h0.png', candidate_1: 'ddib', candidate_2: 'flow', candidate_3: 'score' },
+  { sampleTitle: 'AA 02', file: 'N0029_NM3_AA_s512_z100_c0_h0.png', candidate_1: 'score', candidate_2: 'flow', candidate_3: 'ddib' },
+  { sampleTitle: 'AA 03', file: 'N0111_NM8_AA_s512_z100_c0_h0.png', candidate_1: 'ddib', candidate_2: 'score', candidate_3: 'flow' },
+  { sampleTitle: 'AA 04', file: 'N0190_NM13_AA_s512_z100_c0_h0.png', candidate_1: 'ddib', candidate_2: 'score', candidate_3: 'flow' },
+  { sampleTitle: 'AA 05', file: 'N0215_EX2_AA_s512_z100_c0_h0.png', candidate_1: 'flow', candidate_2: 'score', candidate_3: 'ddib' },
+  { sampleTitle: 'AA 06', file: 'N0216_GD5_AA_s512_z100_c0_h0.png', candidate_1: 'flow', candidate_2: 'score', candidate_3: 'ddib' },
+  { sampleTitle: 'AA 07', file: 'N0257_EX5_AA_s512_z100_c0_h0.png', candidate_1: 'ddib', candidate_2: 'score', candidate_3: 'flow' },
+  { sampleTitle: 'AA 08', file: 'N0268_GD9_AA_s512_z100_c0_h0.png', candidate_1: 'flow', candidate_2: 'ddib', candidate_3: 'score' },
+  { sampleTitle: 'DA 01', file: 'N0190_NM13_DA_s512_z100_c0_h0.png', candidate_1: 'flow', candidate_2: 'ddib', candidate_3: 'score' },
+  { sampleTitle: 'DA 02', file: 'N0215_EX2_DA_s512_z100_c0_h0.png', candidate_1: 'score', candidate_2: 'flow', candidate_3: 'ddib' },
+  { sampleTitle: 'DA 03', file: 'N0257_EX5_DA_s512_z100_c0_h0.png', candidate_1: 'flow', candidate_2: 'ddib', candidate_3: 'score' },
+  { sampleTitle: 'DA 04', file: 'N0268_GD9_DA_s512_z100_c0_h0.png', candidate_1: 'flow', candidate_2: 'ddib', candidate_3: 'score' },
+].map((item, index) => ({
+  id: `Q${String(index + 1).padStart(2, '0')}`,
+  view: item.sampleTitle.split(' ')[0],
+  ...item,
+}));
 
 const metrics = [
   {
@@ -55,24 +104,18 @@ const metrics = [
 ];
 
 const candidateList = [
-  { id: 'candidate_1', label: '후보1' },
-  { id: 'candidate_2', label: '후보2' },
-  { id: 'candidate_3', label: '후보3' },
+  { id: 'candidate_1', label: 'Candidate 1' },
+  { id: 'candidate_2', label: 'Candidate 2' },
+  { id: 'candidate_3', label: 'Candidate 3' },
 ];
 
-const questions = sampleTitles.map((sampleTitle, index) => ({
-  id: `Q${String(index + 1).padStart(2, '0')}`,
-  sampleTitle,
-  view: sampleTitle.split(' ')[0],
-  file: `case_${String(index + 1).padStart(3, '0')}.png`,
-}));
+const methods = ['score', 'ddib', 'flow'];
 
-const answerKey = questions.reduce((acc, question, index) => {
-  const rotated = methods.map((_, methodIndex) => methods[(methodIndex + index) % methods.length]);
+const answerKey = questions.reduce((acc, question) => {
   acc[question.id] = {
-    candidate_1: rotated[0],
-    candidate_2: rotated[1],
-    candidate_3: rotated[2],
+    candidate_1: question.candidate_1,
+    candidate_2: question.candidate_2,
+    candidate_3: question.candidate_3,
   };
   return acc;
 }, {});
@@ -83,115 +126,15 @@ function cn(...items) {
 
 function countQuestionScores(questionAnswer) {
   if (!questionAnswer) return 0;
+
   return candidateList.reduce((sum, candidate) => {
     const scores = questionAnswer[candidate.id] || {};
     return sum + metrics.filter((metric) => scores[metric.id] !== undefined).length;
   }, 0);
 }
 
-function makeDemoParticipant(name, offset) {
-  const answers = {};
-  questions.forEach((question, qIndex) => {
-    answers[question.id] = {};
-    candidateList.forEach((candidate, cIndex) => {
-      answers[question.id][candidate.id] = {};
-      metrics.forEach((metric, mIndex) => {
-        const model = answerKey[question.id][candidate.id];
-        const boost = model === 'flow' ? 1 : model === 'ddib' ? 0.6 : 0.25;
-        const base = (qIndex + cIndex + mIndex + offset) % 4;
-        answers[question.id][candidate.id][metric.id] = Math.max(
-          0,
-          Math.min(3, Math.round((base + boost) / 1.25))
-        );
-      });
-    });
-  });
-  return { evaluatorId: name, answers };
-}
-
-const demoParticipants = [
-  makeDemoParticipant('demo_rater_01', 0),
-  makeDemoParticipant('demo_rater_02', 1),
-  makeDemoParticipant('demo_rater_03', 2),
-];
-
-function StartScreen({ evaluatorId, setEvaluatorId, onStart, onResults }) {
-  return (
-    <main className="min-h-screen bg-slate-50 text-slate-950">
-      <div className="h-3 bg-[#0f5d75]" />
-      <section className="mx-auto grid max-w-7xl gap-6 px-4 py-6 sm:px-6 lg:grid-cols-[1.08fr_0.92fr] lg:px-8 lg:py-12">
-        <div>
-          <div className="mb-6 flex items-start justify-between gap-4 sm:mb-10">
-            <div>
-              <p className="text-xl font-black tracking-tight text-[#174a5e] sm:text-2xl">Blind Test</p>
-              <h1 className="mt-1 text-3xl font-black tracking-tight text-[#174a5e] sm:text-5xl">영상 평가 기준 수립</h1>
-            </div>
-            <div className="hidden text-right text-sm font-semibold text-slate-500 md:block">
-              Medical Artificial<br />Intelligence Laboratory
-            </div>
-          </div>
-
-          <div className="space-y-5 rounded-[1.5rem] border border-slate-200 bg-white p-4 shadow-sm sm:p-8">
-            {metrics.map((metric, index) => (
-              <div key={metric.id} className="border-b border-slate-100 pb-5 last:border-0 last:pb-0">
-                <h2 className="text-lg font-black leading-snug text-slate-950 sm:text-2xl">
-                  {index + 1}. {metric.full}
-                </h2>
-                <p className="mt-1 text-base font-bold leading-snug text-slate-700 sm:text-xl">
-                  (0점: {metric.scale[0]}, 1점: {metric.scale[1]}, 2점: {metric.scale[2]}, 3점: {metric.scale[3]})
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="self-center rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-xl shadow-slate-200/70 sm:rounded-[2rem] sm:p-7">
-          <div className="mb-6 inline-flex items-center gap-2 rounded-full bg-[#eaf4f7] px-4 py-2 text-sm font-extrabold text-[#0f5d75]">
-            <ClipboardCheck size={16} /> Metric-based Blind Evaluation
-          </div>
-          <h2 className="text-2xl font-black tracking-tight text-slate-950 sm:text-3xl">3 후보 × 5개 지표 점수 평가</h2>
-          <p className="mt-3 text-base leading-7 text-slate-600">
-            각 샘플에 대해 후보 1, 2, 3의 품질을 항목별로 0~3점 평가함.
-          </p>
-
-          <div className="mt-7 grid grid-cols-1 gap-3 sm:grid-cols-3">
-            <div className="rounded-2xl bg-slate-50 p-4 text-center">
-              <p className="text-3xl font-black">{questions.length}</p>
-              <p className="mt-1 text-xs font-bold text-slate-500">평가 샘플</p>
-            </div>
-            <div className="rounded-2xl bg-slate-50 p-4 text-center">
-              <p className="text-3xl font-black">3</p>
-              <p className="mt-1 text-xs font-bold text-slate-500">블라인드 후보</p>
-            </div>
-            <div className="rounded-2xl bg-slate-50 p-4 text-center">
-              <p className="text-3xl font-black">{metrics.length}</p>
-              <p className="mt-1 text-xs font-bold text-slate-500">평가 항목</p>
-            </div>
-          </div>
-
-          <label className="mt-8 block text-sm font-extrabold text-slate-700">평가자 ID</label>
-          <input
-            value={evaluatorId}
-            onChange={(event) => setEvaluatorId(event.target.value)}
-            placeholder="예: rater_01"
-            className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4 text-lg font-bold outline-none transition focus:border-[#0f5d75] focus:bg-white"
-          />
-          <button
-            onClick={onStart}
-            className="mt-4 flex w-full items-center justify-center gap-2 rounded-2xl bg-[#0f5d75] px-5 py-4 text-lg font-black text-white shadow-lg shadow-[#0f5d75]/20"
-          >
-            평가 시작 <ChevronRight size={20} />
-          </button>
-          <button
-            onClick={onResults}
-            className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-4 text-base font-black text-slate-700"
-          >
-            <BarChart3 size={18} /> 결과 대시보드 미리보기
-          </button>
-        </div>
-      </section>
-    </main>
-  );
+function countAllScores(answers) {
+  return questions.reduce((sum, question) => sum + countQuestionScores(answers?.[question.id]), 0);
 }
 
 function CompactScoreButtons({ selected, onSelect, metric }) {
@@ -220,7 +163,9 @@ function CompactScoreTable({ question, answers, onScore }) {
   return (
     <div className="overflow-hidden rounded-xl border border-slate-300 bg-white shadow-sm sm:rounded-[1.5rem]">
       <div className="flex items-center justify-between gap-2 border-b border-slate-300 bg-white px-3 py-2 sm:px-5 sm:py-4">
-        <h2 className="text-3xl font-black tracking-tight text-slate-950 sm:text-5xl">{question.sampleTitle}</h2>
+        <h2 className="text-3xl font-black tracking-tight text-slate-950 sm:text-5xl">
+          {question.sampleTitle}
+        </h2>
         <div className="text-right text-[11px] font-black text-slate-400 sm:text-sm">
           후보별 5개 항목 평가
         </div>
@@ -233,7 +178,7 @@ function CompactScoreTable({ question, answers, onScore }) {
             {candidateList.map((candidate) => (
               <th
                 key={candidate.id}
-                className="border-b border-r border-slate-300 bg-white px-1 py-3 text-base font-black text-slate-950 last:border-r-0 sm:px-3 sm:py-6 sm:text-3xl"
+                className="border-b border-r border-slate-300 bg-white px-1 py-3 text-sm font-black text-slate-950 last:border-r-0 sm:px-3 sm:py-6 sm:text-3xl"
               >
                 {candidate.label}
               </th>
@@ -250,8 +195,12 @@ function CompactScoreTable({ question, answers, onScore }) {
 
               {candidateList.map((candidate) => {
                 const selected = answers[question.id]?.[candidate.id]?.[metric.id];
+
                 return (
-                  <td key={candidate.id} className="border-r border-t border-slate-300 px-1 py-2 last:border-r-0 sm:px-4 sm:py-6">
+                  <td
+                    key={candidate.id}
+                    className="border-r border-t border-slate-300 px-1 py-2 last:border-r-0 sm:px-4 sm:py-6"
+                  >
                     <CompactScoreButtons
                       selected={selected}
                       metric={metric}
@@ -272,29 +221,156 @@ function CompactScoreTable({ question, answers, onScore }) {
   );
 }
 
-function EvaluationScreen({ answers, setAnswers, onResults, onReset }) {
+function StartScreen({ evaluatorId, setEvaluatorId, onStart, onResults, participantCount }) {
+  return (
+    <main className="min-h-screen bg-slate-50 text-slate-950">
+      <div className="h-3 bg-[#0f5d75]" />
+
+      <section className="mx-auto grid max-w-7xl gap-6 px-4 py-6 sm:px-6 lg:grid-cols-[1.08fr_0.92fr] lg:px-8 lg:py-12">
+        <div>
+          <div className="mb-6 flex items-start justify-between gap-4 sm:mb-10">
+            <div>
+              <p className="text-xl font-black tracking-tight text-[#174a5e] sm:text-2xl">
+                Blind Test
+              </p>
+              <h1 className="mt-1 text-3xl font-black tracking-tight text-[#174a5e] sm:text-5xl">
+                영상 평가 기준 수립
+              </h1>
+            </div>
+
+            <div className="hidden text-right text-sm font-semibold text-slate-500 md:block">
+              Medical Artificial
+              <br />
+              Intelligence Laboratory
+            </div>
+          </div>
+
+          <div className="space-y-5 rounded-[1.5rem] border border-slate-200 bg-white p-4 shadow-sm sm:p-8">
+            {metrics.map((metric, index) => (
+              <div key={metric.id} className="border-b border-slate-100 pb-5 last:border-0 last:pb-0">
+                <h2 className="text-lg font-black leading-snug text-slate-950 sm:text-2xl">
+                  {index + 1}. {metric.full}
+                </h2>
+                <p className="mt-1 text-base font-bold leading-snug text-slate-700 sm:text-xl">
+                  (0점: {metric.scale[0]}, 1점: {metric.scale[1]}, 2점: {metric.scale[2]}, 3점: {metric.scale[3]})
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="self-center rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-xl shadow-slate-200/70 sm:rounded-[2rem] sm:p-7">
+          <div className="mb-6 inline-flex items-center gap-2 rounded-full bg-[#eaf4f7] px-4 py-2 text-sm font-extrabold text-[#0f5d75]">
+            <ClipboardCheck size={16} />
+            Metric-based Blind Evaluation
+          </div>
+
+          <h2 className="text-2xl font-black tracking-tight text-slate-950 sm:text-3xl">
+            3 Candidates × 5 Metrics
+          </h2>
+
+          <p className="mt-3 text-base leading-7 text-slate-600">
+            Candidate 1, 2, 3의 품질을 항목별로 0~3점 평가함.
+          </p>
+
+          <div className="mt-7 grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <div className="rounded-2xl bg-slate-50 p-4 text-center">
+              <p className="text-3xl font-black">{questions.length}</p>
+              <p className="mt-1 text-xs font-bold text-slate-500">평가 샘플</p>
+            </div>
+            <div className="rounded-2xl bg-slate-50 p-4 text-center">
+              <p className="text-3xl font-black">3</p>
+              <p className="mt-1 text-xs font-bold text-slate-500">Candidates</p>
+            </div>
+            <div className="rounded-2xl bg-slate-50 p-4 text-center">
+              <p className="text-3xl font-black">{metrics.length}</p>
+              <p className="mt-1 text-xs font-bold text-slate-500">평가 항목</p>
+            </div>
+          </div>
+
+          <div className="mt-5 rounded-2xl bg-slate-50 p-4 text-sm font-bold text-slate-600">
+            저장 모드: {isFirebaseEnabled ? 'Firebase Firestore' : 'localStorage'} · 등록 평가자 {participantCount}명
+          </div>
+
+          <label className="mt-6 block text-sm font-extrabold text-slate-700">
+            평가자 ID
+          </label>
+
+          <input
+            value={evaluatorId}
+            onChange={(event) => setEvaluatorId(event.target.value)}
+            placeholder="예: rater_01"
+            className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4 text-lg font-bold outline-none transition focus:border-[#0f5d75] focus:bg-white"
+          />
+
+          <button
+            onClick={onStart}
+            className="mt-4 flex w-full items-center justify-center gap-2 rounded-2xl bg-[#0f5d75] px-5 py-4 text-lg font-black text-white shadow-lg shadow-[#0f5d75]/20"
+          >
+            평가 시작 <ChevronRight size={20} />
+          </button>
+
+          <button
+            onClick={onResults}
+            className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-4 text-base font-black text-slate-700"
+          >
+            <BarChart3 size={18} />
+            결과 대시보드 미리보기
+          </button>
+        </div>
+      </section>
+    </main>
+  );
+}
+
+function EvaluationScreen({
+  evaluatorId,
+  answers,
+  setAnswers,
+  onResults,
+  onReset,
+  onParticipantAnswers,
+}) {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [isSaving, setIsSaving] = useState(false);
   const question = questions[currentIndex];
+
   const totalScores = questions.length * candidateList.length * metrics.length;
-  const savedScores = questions.reduce((sum, item) => sum + countQuestionScores(answers[item.id]), 0);
+  const savedScores = countAllScores(answers);
   const progress = Math.round((savedScores / totalScores) * 100);
   const currentComplete = countQuestionScores(answers[question.id]);
   const currentTotal = candidateList.length * metrics.length;
 
-  const onScore = (questionId, candidateId, metricId, score) => {
-    setAnswers((prev) => ({
-      ...prev,
+  const onScore = async (questionId, candidateId, metricId, score) => {
+    const nextAnswers = {
+      ...answers,
       [questionId]: {
-        ...(prev[questionId] || {}),
+        ...(answers[questionId] || {}),
         [candidateId]: {
-          ...((prev[questionId] || {})[candidateId] || {}),
+          ...((answers[questionId] || {})[candidateId] || {}),
           [metricId]: score,
         },
       },
-    }));
+    };
+
+    setAnswers(nextAnswers);
+    onParticipantAnswers(nextAnswers);
+
+    try {
+      setIsSaving(true);
+      await saveMetricScore({ evaluatorId, questionId, candidateId, metricId, score });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
-  const goToQuestion = (nextIndex) => {
+  const goToQuestion = async (nextIndex) => {
+    if (nextIndex >= questions.length) {
+      await markParticipantComplete(evaluatorId);
+      onResults();
+      return;
+    }
+
     setCurrentIndex(nextIndex);
     window.requestAnimationFrame(() => {
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -306,8 +382,12 @@ function EvaluationScreen({ answers, setAnswers, onResults, onReset }) {
       <div className="sticky top-0 z-20 border-b border-slate-200 bg-white/95 backdrop-blur">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-2 px-2 py-2 sm:px-6 sm:py-4">
           <div className="min-w-0">
-            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#0f5d75] sm:text-xs sm:tracking-[0.25em]">Metric Blind Test</p>
-            <h1 className="truncate text-xl font-black text-slate-950 sm:text-3xl">{question.sampleTitle}</h1>
+            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#0f5d75] sm:text-xs sm:tracking-[0.25em]">
+              Metric Blind Test
+            </p>
+            <h1 className="truncate text-xl font-black text-slate-950 sm:text-3xl">
+              {question.sampleTitle}
+            </h1>
           </div>
 
           <div className="flex shrink-0 items-center gap-1.5 sm:gap-3">
@@ -317,8 +397,19 @@ function EvaluationScreen({ answers, setAnswers, onResults, onReset }) {
             <div className="rounded-xl bg-slate-50 px-2.5 py-2 text-[11px] font-black text-slate-600 sm:rounded-2xl sm:px-4 sm:py-3 sm:text-sm">
               {currentComplete}/{currentTotal}
             </div>
-            <button onClick={onResults} className="rounded-xl bg-slate-950 px-3 py-2 text-xs font-black text-white sm:rounded-2xl sm:px-4 sm:py-3 sm:text-sm">결과</button>
-            <button onClick={onReset} className="rounded-xl border border-slate-200 bg-white px-2.5 py-2 text-xs font-black text-slate-600 sm:rounded-2xl sm:px-4 sm:py-3 sm:text-sm">
+            <div className="hidden rounded-2xl bg-slate-50 px-4 py-3 text-sm font-black text-slate-500 sm:block">
+              {isSaving ? '저장 중' : '저장됨'}
+            </div>
+            <button
+              onClick={onResults}
+              className="rounded-xl bg-slate-950 px-3 py-2 text-xs font-black text-white sm:rounded-2xl sm:px-4 sm:py-3 sm:text-sm"
+            >
+              결과
+            </button>
+            <button
+              onClick={onReset}
+              className="rounded-xl border border-slate-200 bg-white px-2.5 py-2 text-xs font-black text-slate-600 sm:rounded-2xl sm:px-4 sm:py-3 sm:text-sm"
+            >
               <RotateCcw size={14} />
             </button>
           </div>
@@ -336,12 +427,13 @@ function EvaluationScreen({ answers, setAnswers, onResults, onReset }) {
           >
             <ChevronLeft size={16} /> 이전
           </button>
+
           <button
-            onClick={() => goToQuestion(Math.min(questions.length - 1, currentIndex + 1))}
+            onClick={() => goToQuestion(currentIndex + 1)}
             className="fixed bottom-4 right-4 z-30 flex items-center gap-1 rounded-2xl bg-[#0f5d75] px-5 py-3 text-sm font-black text-white shadow-xl shadow-[#0f5d75]/25 disabled:opacity-40 sm:static sm:px-5 sm:py-3 sm:text-base"
-            disabled={currentIndex === questions.length - 1}
           >
-            다음 <ChevronRight size={16} />
+            {currentIndex === questions.length - 1 ? '완료' : '다음'}
+            <ChevronRight size={16} />
           </button>
         </div>
       </section>
@@ -351,6 +443,7 @@ function EvaluationScreen({ answers, setAnswers, onResults, onReset }) {
 
 function aggregate(participants) {
   const modelMetric = {};
+
   methods.forEach((method) => {
     modelMetric[method] = {};
     metrics.forEach((metric) => {
@@ -362,6 +455,7 @@ function aggregate(participants) {
     questions.forEach((question) => {
       candidateList.forEach((candidate) => {
         const method = answerKey[question.id][candidate.id];
+
         metrics.forEach((metric) => {
           const value = participant.answers?.[question.id]?.[candidate.id]?.[metric.id];
           if (typeof value === 'number') modelMetric[method][metric.id].push(value);
@@ -379,7 +473,11 @@ function aggregate(participants) {
     }),
     metricRows: metrics.map((metric) => ({
       metric,
-      scores: methods.map((method) => ({ method, average: avg(modelMetric[method][metric.id]), count: modelMetric[method][metric.id].length })),
+      scores: methods.map((method) => ({
+        method,
+        average: avg(modelMetric[method][metric.id]),
+        count: modelMetric[method][metric.id].length,
+      })),
     })),
   };
 }
@@ -393,26 +491,55 @@ function ScoreBar({ value }) {
   );
 }
 
-function ResultsScreen({ evaluatorId, answers, onBack }) {
+function ResultsScreen({ participants, currentEvaluatorId, currentAnswers, onBack }) {
   const [scope, setScope] = useState('all');
-  const currentParticipant = { evaluatorId: evaluatorId || 'local_rater', answers };
-  const participants = scope === 'current' ? [currentParticipant] : [...demoParticipants, currentParticipant];
-  const result = useMemo(() => aggregate(participants), [scope, answers]);
+
+  const currentParticipant = {
+    evaluatorId: currentEvaluatorId || 'current_rater',
+    answers: currentAnswers || {},
+  };
+
+  const sourceParticipants = scope === 'current' ? [currentParticipant] : participants;
+  const result = useMemo(() => aggregate(sourceParticipants), [sourceParticipants]);
   const sortedTotal = [...result.totalByModel].sort((a, b) => b.average - a.average);
 
   return (
     <main className="min-h-screen bg-slate-50 text-slate-900">
       <div className="h-3 bg-[#0f5d75]" />
+
       <section className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8">
         <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
           <div>
-            <p className="text-xs font-black uppercase tracking-[0.25em] text-[#0f5d75]">Result Dashboard</p>
-            <h1 className="text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">모델별 세부 평가 집계</h1>
+            <p className="text-xs font-black uppercase tracking-[0.25em] text-[#0f5d75]">
+              Result Dashboard
+            </p>
+            <h1 className="text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">
+              모델별 세부 평가 집계
+            </h1>
+            <p className="mt-2 text-sm font-bold text-slate-500">
+              집계 대상 평가자 {sourceParticipants.length}명 · 저장 모드 {isFirebaseEnabled ? 'Firebase' : 'localStorage'}
+            </p>
           </div>
+
           <div className="flex flex-wrap gap-2">
-            <button onClick={() => setScope('all')} className={cn('rounded-2xl px-4 py-3 text-sm font-black', scope === 'all' ? 'bg-slate-950 text-white' : 'bg-white text-slate-600')}>데모 + 현재 응답</button>
-            <button onClick={() => setScope('current')} className={cn('rounded-2xl px-4 py-3 text-sm font-black', scope === 'current' ? 'bg-slate-950 text-white' : 'bg-white text-slate-600')}>현재 응답만</button>
-            <button onClick={onBack} className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-black text-slate-600">평가로 돌아가기</button>
+            <button
+              onClick={() => setScope('all')}
+              className={cn('rounded-2xl px-4 py-3 text-sm font-black', scope === 'all' ? 'bg-slate-950 text-white' : 'bg-white text-slate-600')}
+            >
+              전체 응답
+            </button>
+            <button
+              onClick={() => setScope('current')}
+              className={cn('rounded-2xl px-4 py-3 text-sm font-black', scope === 'current' ? 'bg-slate-950 text-white' : 'bg-white text-slate-600')}
+            >
+              현재 응답만
+            </button>
+            <button
+              onClick={onBack}
+              className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-black text-slate-600"
+            >
+              평가로 돌아가기
+            </button>
           </div>
         </div>
 
@@ -470,7 +597,9 @@ function ResultsScreen({ evaluatorId, answers, onBack }) {
                       {ranking.map((score, index) => (
                         <div key={score.method} className="flex items-center justify-between rounded-xl bg-white px-3 py-2 ring-1 ring-slate-100">
                           <div className="flex items-center gap-3">
-                            <span className={cn('grid h-7 w-7 place-items-center rounded-full text-xs font-black', index === 0 ? 'bg-[#0f5d75] text-white' : 'bg-slate-100 text-slate-500')}>{index + 1}</span>
+                            <span className={cn('grid h-7 w-7 place-items-center rounded-full text-xs font-black', index === 0 ? 'bg-[#0f5d75] text-white' : 'bg-slate-100 text-slate-500')}>
+                              {index + 1}
+                            </span>
                             <span className="text-sm font-black text-slate-800">{score.method}</span>
                           </div>
                           <span className="text-sm font-black text-slate-950">{score.average.toFixed(2)}</span>
@@ -492,26 +621,60 @@ export default function App() {
   const [screen, setScreen] = useState('start');
   const [evaluatorId, setEvaluatorId] = useState('');
   const [answers, setAnswers] = useState({});
+  const [participants, setParticipants] = useState([]);
 
   useEffect(() => {
-    const saved = localStorage.getItem('medison_metric_answers');
-    if (!saved) return;
-    try {
-      setAnswers(JSON.parse(saved));
-    } catch {
-      setAnswers({});
-    }
+    const unsubscribe = subscribeParticipants((items) => {
+      setParticipants(items);
+    });
+
+    return () => unsubscribe?.();
   }, []);
 
-  useEffect(() => {
-    localStorage.setItem('medison_metric_answers', JSON.stringify(answers));
-  }, [answers]);
+  const startEvaluation = async () => {
+    const cleanId = evaluatorId.trim();
+
+    if (!cleanId) {
+      alert('평가자 ID를 입력해주세요.');
+      return;
+    }
+
+    const participant = await loadOrCreateParticipant(cleanId);
+    setAnswers(participant.answers || {});
+    setScreen('eval');
+  };
+
+  const updateParticipantAnswers = (nextAnswers) => {
+    setParticipants((prev) => {
+      const key = String(evaluatorId || '').trim().replace(/\s+/g, '_').toLowerCase();
+      const evaluatorKey = encodeURIComponent(key);
+      const existingIndex = prev.findIndex((item) => item.evaluatorKey === evaluatorKey);
+
+      if (existingIndex < 0) {
+        return [
+          ...prev,
+          {
+            evaluatorId,
+            evaluatorKey,
+            answers: nextAnswers,
+          },
+        ];
+      }
+
+      const next = [...prev];
+      next[existingIndex] = {
+        ...next[existingIndex],
+        answers: nextAnswers,
+      };
+      return next;
+    });
+  };
 
   const reset = () => {
-    const ok = window.confirm('현재 입력한 평가를 모두 초기화할까요?');
+    const ok = window.confirm('현재 화면의 입력 상태만 초기화할까요? 이미 저장된 서버/localStorage 데이터는 유지됩니다.');
     if (!ok) return;
+
     setAnswers({});
-    localStorage.removeItem('medison_metric_answers');
     setScreen('start');
   };
 
@@ -520,22 +683,32 @@ export default function App() {
       <StartScreen
         evaluatorId={evaluatorId}
         setEvaluatorId={setEvaluatorId}
-        onStart={() => setScreen('eval')}
+        onStart={startEvaluation}
         onResults={() => setScreen('results')}
+        participantCount={participants.length}
       />
     );
   }
 
   if (screen === 'results') {
-    return <ResultsScreen evaluatorId={evaluatorId} answers={answers} onBack={() => setScreen('eval')} />;
+    return (
+      <ResultsScreen
+        participants={participants}
+        currentEvaluatorId={evaluatorId}
+        currentAnswers={answers}
+        onBack={() => setScreen(evaluatorId ? 'eval' : 'start')}
+      />
+    );
   }
 
   return (
     <EvaluationScreen
+      evaluatorId={evaluatorId.trim()}
       answers={answers}
       setAnswers={setAnswers}
       onResults={() => setScreen('results')}
       onReset={reset}
+      onParticipantAnswers={updateParticipantAnswers}
     />
   );
 }
