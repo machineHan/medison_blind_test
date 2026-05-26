@@ -23,6 +23,7 @@ const questions = [
   { sampleTitle: "3VT 04", file: "N0216_GD5_3VT_s512_z100_c0_h0.png", candidate_1: "ddib", candidate_2: "score", candidate_3: "flow" },
   { sampleTitle: "3VT 05", file: "N0257_EX5_3VT_s512_z100_c0_h0.png", candidate_1: "ddib", candidate_2: "score", candidate_3: "flow" },
   { sampleTitle: "3VT 06", file: "N0268_GD9_3VT_s512_z100_c0_h0.png", candidate_1: "score", candidate_2: "flow", candidate_3: "ddib" },
+
   { sampleTitle: "3VV 01", file: "N0029_NM3_3VV_s512_z100_c0_h0.png", candidate_1: "ddib", candidate_2: "score", candidate_3: "flow" },
   { sampleTitle: "3VV 02", file: "N0111_NM8_3VV_s512_z100_c0_h0.png", candidate_1: "flow", candidate_2: "ddib", candidate_3: "score" },
   { sampleTitle: "3VV 03", file: "N0190_NM13_3VV2_s512_z100_c0_h0.png", candidate_1: "ddib", candidate_2: "score", candidate_3: "flow" },
@@ -32,6 +33,7 @@ const questions = [
   { sampleTitle: "3VV 07", file: "N0216_GD5_3VV_s512_z100_c0_h0.png", candidate_1: "score", candidate_2: "ddib", candidate_3: "flow" },
   { sampleTitle: "3VV 08", file: "N0257_EX5_3VV_s512_z100_c0_h0.png", candidate_1: "score", candidate_2: "ddib", candidate_3: "flow" },
   { sampleTitle: "3VV 09", file: "N0268_GD9_3VV_s512_z100_c0_h0.png", candidate_1: "flow", candidate_2: "ddib", candidate_3: "score" },
+
   { sampleTitle: "4CH 01", file: "N0020_NM2_4CH_s512_z100_c0_h0.png", candidate_1: "score", candidate_2: "ddib", candidate_3: "flow" },
   { sampleTitle: "4CH 02", file: "N0029_NM3_4CH_s512_z100_c0_h0.png", candidate_1: "score", candidate_2: "ddib", candidate_3: "flow" },
   { sampleTitle: "4CH 03", file: "N0111_NM8_4CH_s512_z100_c0_h0.png", candidate_1: "score", candidate_2: "flow", candidate_3: "ddib" },
@@ -40,18 +42,21 @@ const questions = [
   { sampleTitle: "4CH 06", file: "N0216_GD5_4CH_s512_z100_c0_h0.png", candidate_1: "score", candidate_2: "ddib", candidate_3: "flow" },
   { sampleTitle: "4CH 07", file: "N0257_EX5_4CH_s512_z100_c0_h0.png", candidate_1: "score", candidate_2: "flow", candidate_3: "ddib" },
   { sampleTitle: "4CH 08", file: "N0268_GD9_4CH_s512_z100_c0_h0.png", candidate_1: "ddib", candidate_2: "score", candidate_3: "flow" },
+
   { sampleTitle: "LVOT 01", file: "N0020_NM2_LVOT_s512_z100_c0_h0.png", candidate_1: "ddib", candidate_2: "flow", candidate_3: "score" },
   { sampleTitle: "LVOT 02", file: "N0190_NM13_LVOT_s512_z100_c0_h0.png", candidate_1: "score", candidate_2: "ddib", candidate_3: "flow" },
   { sampleTitle: "LVOT 03", file: "N0215_EX2_LVOT_s512_z100_c0_h0.png", candidate_1: "score", candidate_2: "ddib", candidate_3: "flow" },
   { sampleTitle: "LVOT 04", file: "N0216_GD5_LVOT_s512_z100_c0_h0.png", candidate_1: "ddib", candidate_2: "score", candidate_3: "flow" },
   { sampleTitle: "LVOT 05", file: "N0257_EX5_LVOT_s512_z100_c0_h0.png", candidate_1: "flow", candidate_2: "ddib", candidate_3: "score" },
   { sampleTitle: "LVOT 06", file: "N0268_GD9_LVOT_s512_z100_c0_h0.png", candidate_1: "score", candidate_2: "flow", candidate_3: "ddib" },
+
   { sampleTitle: "RVOT 01", file: "N0020_NM2_RVOT_s512_z100_c0_h0.png", candidate_1: "flow", candidate_2: "ddib", candidate_3: "score" },
   { sampleTitle: "RVOT 02", file: "N0111_NM8_RVOT_s512_z100_c0_h0.png", candidate_1: "ddib", candidate_2: "flow", candidate_3: "score" },
   { sampleTitle: "RVOT 03", file: "N0215_EX2_RVOT_s512_z100_c0_h0.png", candidate_1: "flow", candidate_2: "score", candidate_3: "ddib" },
   { sampleTitle: "RVOT 04", file: "N0257_EX5_RVOT2_s512_z100_c0_h0.png", candidate_1: "ddib", candidate_2: "score", candidate_3: "flow" },
   { sampleTitle: "RVOT 05", file: "N0257_EX5_RVOT_s512_z100_c0_h0.png", candidate_1: "ddib", candidate_2: "flow", candidate_3: "score" },
   { sampleTitle: "RVOT 06", file: "N0268_GD9_RVOT_s512_z100_c0_h0.png", candidate_1: "flow", candidate_2: "ddib", candidate_3: "score" },
+
   { sampleTitle: "AA 01", file: "N0020_NM2_AA_s512_z100_c0_h0.png", candidate_1: "ddib", candidate_2: "flow", candidate_3: "score" },
   { sampleTitle: "AA 02", file: "N0029_NM3_AA_s512_z100_c0_h0.png", candidate_1: "score", candidate_2: "flow", candidate_3: "ddib" },
   { sampleTitle: "AA 03", file: "N0111_NM8_AA_s512_z100_c0_h0.png", candidate_1: "ddib", candidate_2: "score", candidate_3: "flow" },
@@ -60,6 +65,7 @@ const questions = [
   { sampleTitle: "AA 06", file: "N0216_GD5_AA_s512_z100_c0_h0.png", candidate_1: "flow", candidate_2: "score", candidate_3: "ddib" },
   { sampleTitle: "AA 07", file: "N0257_EX5_AA_s512_z100_c0_h0.png", candidate_1: "ddib", candidate_2: "score", candidate_3: "flow" },
   { sampleTitle: "AA 08", file: "N0268_GD9_AA_s512_z100_c0_h0.png", candidate_1: "flow", candidate_2: "ddib", candidate_3: "score" },
+
   { sampleTitle: "DA 01", file: "N0190_NM13_DA_s512_z100_c0_h0.png", candidate_1: "flow", candidate_2: "ddib", candidate_3: "score" },
   { sampleTitle: "DA 02", file: "N0215_EX2_DA_s512_z100_c0_h0.png", candidate_1: "score", candidate_2: "flow", candidate_3: "ddib" },
   { sampleTitle: "DA 03", file: "N0257_EX5_DA_s512_z100_c0_h0.png", candidate_1: "flow", candidate_2: "ddib", candidate_3: "score" },
@@ -103,14 +109,12 @@ const metrics = [
   },
 ];
 
-const imageSlots = [
-  { id: "input", label: "Input" },
+const candidateList = [
   { id: "candidate_1", label: "Candidate 1" },
   { id: "candidate_2", label: "Candidate 2" },
   { id: "candidate_3", label: "Candidate 3" },
 ];
 
-const candidateList = imageSlots.filter((slot) => slot.id !== "input");
 const methods = ["score", "ddib", "flow"];
 
 const answerKey = questions.reduce((acc, question) => {
@@ -128,6 +132,7 @@ function cn(...items) {
 
 function countQuestionScores(questionAnswer) {
   if (!questionAnswer) return 0;
+
   return candidateList.reduce((sum, candidate) => {
     const scores = questionAnswer[candidate.id] || {};
     return sum + metrics.filter((metric) => scores[metric.id] !== undefined).length;
@@ -138,61 +143,19 @@ function countAllScores(answers) {
   return questions.reduce((sum, question) => sum + countQuestionScores(answers?.[question.id]), 0);
 }
 
-function getImageSrc(slotId, file) {
-  if (slotId === "input") return `/images/input/${file}`;
-  return `/images/${slotId}/${file}`;
-}
-
-function ImagePreview({ slot, question }) {
-  const [failed, setFailed] = useState(false);
-
+function CompactScoreButtons({ selected, onSelect, metric }) {
   return (
-    <div className="rounded-2xl bg-slate-100 p-1.5 sm:p-2">
-      <div className="relative aspect-video overflow-hidden rounded-xl bg-gradient-to-br from-slate-900 via-slate-700 to-slate-500">
-        {!failed && (
-          <img
-            src={getImageSrc(slot.id, question.file)}
-            alt={`${question.sampleTitle} ${slot.label}`}
-            className="h-full w-full object-contain"
-            onError={() => setFailed(true)}
-          />
-        )}
-
-        {failed && (
-          <div className="flex h-full items-center justify-center bg-black/10 text-center text-sm font-black leading-tight text-white/90 sm:text-base">
-            {slot.label}
-            <br />
-            image
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-function ImagePreviewRow({ question }) {
-  return (
-    <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3">
-      {imageSlots.map((slot) => (
-        <ImagePreview key={`${question.id}-${slot.id}`} slot={slot} question={question} />
-      ))}
-    </div>
-  );
-}
-
-function ScoreButtons({ selected, onSelect, metric }) {
-  return (
-    <div className="grid grid-cols-4 gap-2">
+    <div className="mx-auto grid max-w-[120px] grid-cols-4 gap-1 sm:max-w-[220px] sm:gap-2">
       {[0, 1, 2, 3].map((score) => (
         <button
           key={score}
           onClick={() => onSelect(score)}
           title={metric.scale[score]}
           className={cn(
-            "rounded-xl border py-2.5 text-base font-black transition active:scale-[0.98] sm:py-3",
+            "h-9 rounded-lg border text-sm font-black transition active:scale-[0.98] sm:h-11 sm:rounded-xl sm:text-lg",
             selected === score
               ? "border-[#0f5d75] bg-[#0f5d75] text-white shadow-md shadow-[#0f5d75]/20"
-              : "border-slate-200 bg-white text-slate-500 hover:bg-slate-50"
+              : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
           )}
         >
           {score}
@@ -202,17 +165,28 @@ function ScoreButtons({ selected, onSelect, metric }) {
   );
 }
 
-function DesktopScoreTable({ question, answers, onScore }) {
+function CompactScoreTable({ question, answers, onScore }) {
   return (
-    <div className="hidden md:block">
+    <div className="overflow-hidden rounded-xl border border-slate-300 bg-white shadow-sm sm:rounded-[1.5rem]">
+      <div className="flex items-center justify-between gap-2 border-b border-slate-300 bg-white px-3 py-2 sm:px-5 sm:py-4">
+        <h2 className="text-3xl font-black tracking-tight text-slate-950 sm:text-5xl">
+          {question.sampleTitle}
+        </h2>
+
+        <div className="text-right text-[11px] font-black text-slate-400 sm:text-sm">
+          후보별 5개 항목 평가
+        </div>
+      </div>
+
       <table className="w-full table-fixed border-collapse text-center">
         <thead>
           <tr>
-            <th className="w-[25%] border-b border-r border-slate-300 bg-white px-3 py-5" />
+            <th className="w-[26%] border-b border-r border-slate-300 bg-white px-1 py-3 text-xs font-black text-slate-950 sm:w-[25%] sm:px-3 sm:py-6" />
+
             {candidateList.map((candidate) => (
               <th
                 key={candidate.id}
-                className="border-b border-r border-slate-300 bg-white px-3 py-5 text-2xl font-black text-slate-950 last:border-r-0"
+                className="border-b border-r border-slate-300 bg-white px-1 py-3 text-sm font-black text-slate-950 last:border-r-0 sm:px-3 sm:py-6 sm:text-3xl"
               >
                 {candidate.label}
               </th>
@@ -223,7 +197,7 @@ function DesktopScoreTable({ question, answers, onScore }) {
         <tbody>
           {metrics.map((metric) => (
             <tr key={metric.id}>
-              <th className="border-r border-t border-slate-300 bg-white px-5 py-5 text-left text-2xl font-black leading-tight text-slate-950">
+              <th className="border-r border-t border-slate-300 bg-white px-2 py-3 text-left text-xs font-black leading-tight text-slate-950 sm:px-8 sm:py-6 sm:text-3xl">
                 {metric.label}
               </th>
 
@@ -233,19 +207,13 @@ function DesktopScoreTable({ question, answers, onScore }) {
                 return (
                   <td
                     key={candidate.id}
-                    className="border-r border-t border-slate-300 px-3 py-5 last:border-r-0"
+                    className="border-r border-t border-slate-300 px-1 py-2 last:border-r-0 sm:px-4 sm:py-6"
                   >
-                    <div className="mx-auto max-w-[240px]">
-                      <ScoreButtons
-                        selected={selected}
-                        metric={metric}
-                        onSelect={(score) => onScore(question.id, candidate.id, metric.id, score)}
-                      />
-                    </div>
-
-                    <p className="mt-2 min-h-4 text-xs font-bold text-slate-400">
-                      {selected !== undefined ? metric.scale[selected] : "미입력"}
-                    </p>
+                    <CompactScoreButtons
+                      selected={selected}
+                      metric={metric}
+                      onSelect={(score) => onScore(question.id, candidate.id, metric.id, score)}
+                    />
                   </td>
                 );
               })}
@@ -253,72 +221,9 @@ function DesktopScoreTable({ question, answers, onScore }) {
           ))}
         </tbody>
       </table>
-    </div>
-  );
-}
 
-function MobileScoreCards({ question, answers, onScore }) {
-  return (
-    <div className="space-y-2 md:hidden">
-      {metrics.map((metric) => (
-        <div key={metric.id} className="rounded-2xl border border-slate-200 bg-white p-2.5 shadow-sm">
-          <div className="mb-2">
-            <h3 className="text-base font-black leading-tight text-slate-950">{metric.label}</h3>
-            <p className="mt-1 text-[10px] font-bold leading-snug text-slate-500">
-              0: {metric.scale[0]} · 1: {metric.scale[1]} · 2: {metric.scale[2]} · 3: {metric.scale[3]}
-            </p>
-          </div>
-
-          <div className="space-y-2">
-            {candidateList.map((candidate) => {
-              const selected = answers[question.id]?.[candidate.id]?.[metric.id];
-
-              return (
-                <div key={candidate.id} className="rounded-xl bg-slate-50 p-2.5">
-                  <div className="mb-1.5 flex items-center justify-between gap-2">
-                    <p className="text-sm font-black text-slate-800">{candidate.label}</p>
-                    <p className="text-[11px] font-bold text-slate-400">
-                      {selected !== undefined ? `${selected}점 선택됨` : "미입력"}
-                    </p>
-                  </div>
-
-                  <ScoreButtons
-                    selected={selected}
-                    metric={metric}
-                    onSelect={(score) => onScore(question.id, candidate.id, metric.id, score)}
-                  />
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function MetricScoreArea({ question, answers, onScore }) {
-  return (
-    <div className="overflow-hidden rounded-[1.25rem] border border-slate-300 bg-white shadow-sm sm:rounded-[1.5rem]">
-      <div className="border-b border-slate-200 bg-white p-2.5 sm:p-5">
-        <div className="grid gap-3 sm:gap-4">
-          <div className="flex items-end justify-between gap-3">
-            <h2 className="text-2xl font-black tracking-tight text-slate-950 sm:text-5xl">
-              {question.sampleTitle}
-            </h2>
-            <p className="hidden text-sm font-bold text-slate-400 sm:block">
-              Input / Candidate comparison
-            </p>
-          </div>
-
-          <ImagePreviewRow question={question} />
-        </div>
-      </div>
-
-      <DesktopScoreTable question={question} answers={answers} onScore={onScore} />
-
-      <div className="bg-slate-50 p-2.5 md:hidden">
-        <MobileScoreCards question={question} answers={answers} onScore={onScore} />
+      <div className="border-t border-slate-200 bg-slate-50 px-3 py-2 text-[10px] font-bold leading-snug text-slate-500 sm:px-5 sm:py-3 sm:text-sm">
+        0: 매우 낮음 / 전혀 개선되지 않음 · 1: 소폭 개선 · 2: 다소 개선 · 3: 확연히 개선
       </div>
     </div>
   );
@@ -374,7 +279,7 @@ function StartScreen({ evaluatorId, setEvaluatorId, onStart, onResults, particip
           </h2>
 
           <p className="mt-3 text-base leading-7 text-slate-600">
-            Input 이미지를 기준으로 Candidate 1, 2, 3의 품질을 항목별로 0~3점 평가함.
+            Candidate 1, 2, 3의 품질을 항목별로 0~3점 평가함.
           </p>
 
           <div className="mt-7 grid grid-cols-1 gap-3 sm:grid-cols-3">
@@ -398,7 +303,9 @@ function StartScreen({ evaluatorId, setEvaluatorId, onStart, onResults, particip
             저장 모드: {isFirebaseEnabled ? "Firebase Firestore" : "localStorage"} · 등록 평가자 {participantCount}명
           </div>
 
-          <label className="mt-6 block text-sm font-extrabold text-slate-700">평가자 ID</label>
+          <label className="mt-6 block text-sm font-extrabold text-slate-700">
+            평가자 ID
+          </label>
 
           <input
             value={evaluatorId}
@@ -490,66 +397,66 @@ function EvaluationScreen({
   return (
     <main className="min-h-screen bg-slate-50 text-slate-900">
       <div className="sticky top-0 z-20 border-b border-slate-200 bg-white/95 backdrop-blur">
-        <div className="mx-auto flex max-w-7xl flex-col items-stretch justify-between gap-3 px-3 py-3 sm:flex-row sm:items-center sm:px-6 sm:py-4">
-          <div>
-            <p className="text-[11px] font-black uppercase tracking-[0.22em] text-[#0f5d75] sm:text-xs">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-2 px-2 py-2 sm:px-6 sm:py-4">
+          <div className="min-w-0">
+            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#0f5d75] sm:text-xs sm:tracking-[0.25em]">
               Metric Blind Test
             </p>
 
-            <h1 className="text-2xl font-black text-slate-950 sm:text-3xl">
+            <h1 className="truncate text-xl font-black text-slate-950 sm:text-3xl">
               {question.sampleTitle}
             </h1>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-            <div className="rounded-2xl bg-slate-50 px-3 py-2 text-xs font-black text-slate-600 sm:px-4 sm:py-3 sm:text-sm">
+          <div className="flex shrink-0 items-center gap-1.5 sm:gap-3">
+            <div className="hidden rounded-2xl bg-slate-50 px-4 py-3 text-sm font-black text-slate-600 sm:block">
               전체 {progress}% 완료
             </div>
 
-            <div className="rounded-2xl bg-slate-50 px-3 py-2 text-xs font-black text-slate-600 sm:px-4 sm:py-3 sm:text-sm">
-              현재 {currentComplete}/{currentTotal}
+            <div className="rounded-xl bg-slate-50 px-2.5 py-2 text-[11px] font-black text-slate-600 sm:rounded-2xl sm:px-4 sm:py-3 sm:text-sm">
+              {currentComplete}/{currentTotal}
             </div>
 
-            <div className="rounded-2xl bg-slate-50 px-3 py-2 text-xs font-black text-slate-500 sm:px-4 sm:py-3 sm:text-sm">
+            <div className="hidden rounded-2xl bg-slate-50 px-4 py-3 text-sm font-black text-slate-500 sm:block">
               {isSaving ? "저장 중" : "저장됨"}
             </div>
 
             <button
               onClick={onResults}
-              className="rounded-2xl bg-slate-950 px-4 py-3 text-sm font-black text-white"
+              className="rounded-xl bg-slate-950 px-3 py-2 text-xs font-black text-white sm:rounded-2xl sm:px-4 sm:py-3 sm:text-sm"
             >
-              결과 보기
+              결과
             </button>
 
             <button
               onClick={onReset}
-              className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-black text-slate-600"
+              className="rounded-xl border border-slate-200 bg-white px-2.5 py-2 text-xs font-black text-slate-600 sm:rounded-2xl sm:px-4 sm:py-3 sm:text-sm"
             >
-              <RotateCcw size={16} />
+              <RotateCcw size={14} />
             </button>
           </div>
         </div>
       </div>
 
-      <section className="mx-auto max-w-7xl px-2 py-2 sm:px-6 sm:py-6">
-        <MetricScoreArea question={question} answers={answers} onScore={onScore} />
+      <section className="mx-auto max-w-7xl px-1.5 py-2 sm:px-6 sm:py-6">
+        <CompactScoreTable question={question} answers={answers} onScore={onScore} />
 
-        <div className="mt-5 flex items-center justify-between pb-24 sm:justify-end sm:gap-3 sm:pb-0">
+        <div className="mt-3 flex items-center justify-between pb-20 sm:justify-end sm:gap-3 sm:pb-0">
           <button
             onClick={() => goToQuestion(Math.max(0, currentIndex - 1))}
-            className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-3 font-black text-slate-700 disabled:opacity-40"
+            className="flex items-center gap-1 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-black text-slate-700 disabled:opacity-40 sm:rounded-2xl sm:px-5 sm:py-3 sm:text-base"
             disabled={currentIndex === 0}
           >
-            <ChevronLeft size={18} />
+            <ChevronLeft size={16} />
             이전
           </button>
 
           <button
             onClick={() => goToQuestion(currentIndex + 1)}
-            className="fixed bottom-5 right-5 z-30 flex items-center gap-2 rounded-2xl bg-[#0f5d75] px-6 py-4 font-black text-white shadow-xl shadow-[#0f5d75]/25 disabled:opacity-40 sm:static sm:px-5 sm:py-3"
+            className="fixed bottom-4 right-4 z-30 flex items-center gap-1 rounded-2xl bg-[#0f5d75] px-5 py-3 text-sm font-black text-white shadow-xl shadow-[#0f5d75]/25 disabled:opacity-40 sm:static sm:px-5 sm:py-3 sm:text-base"
           >
             {currentIndex === questions.length - 1 ? "완료" : "다음"}
-            <ChevronRight size={18} />
+            <ChevronRight size={16} />
           </button>
         </div>
       </section>
@@ -559,6 +466,7 @@ function EvaluationScreen({
 
 function aggregate(participants) {
   const modelMetric = {};
+
   methods.forEach((method) => {
     modelMetric[method] = {};
     metrics.forEach((metric) => {
@@ -588,6 +496,7 @@ function aggregate(participants) {
       const allScores = metrics.flatMap((metric) => modelMetric[method][metric.id]);
       return { method, average: avg(allScores), count: allScores.length };
     }),
+
     metricRows: metrics.map((metric) => ({
       metric,
       scores: methods.map((method) => ({
@@ -833,9 +742,19 @@ export default function App() {
   const updateParticipantAnswers = (nextAnswers) => {
     setParticipants((prev) => {
       const key = String(evaluatorId || "").trim().replace(/\s+/g, "_").toLowerCase();
-      const existingIndex = prev.findIndex((item) => item.evaluatorKey === encodeURIComponent(key));
+      const evaluatorKey = encodeURIComponent(key);
+      const existingIndex = prev.findIndex((item) => item.evaluatorKey === evaluatorKey);
 
-      if (existingIndex < 0) return prev;
+      if (existingIndex < 0) {
+        return [
+          ...prev,
+          {
+            evaluatorId,
+            evaluatorKey,
+            answers: nextAnswers,
+          },
+        ];
+      }
 
       const next = [...prev];
       next[existingIndex] = {
@@ -849,6 +768,7 @@ export default function App() {
   const reset = () => {
     const ok = window.confirm("현재 화면의 입력 상태만 초기화할까요? 이미 저장된 서버/localStorage 데이터는 유지됩니다.");
     if (!ok) return;
+
     setAnswers({});
     setScreen("start");
   };
