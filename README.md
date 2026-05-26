@@ -1,16 +1,23 @@
-# React + Vite
+# Medison Blind Test - Google Sheets Collection
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React + Vite + Tailwind 기반 평가 웹페이지입니다.
 
-Currently, two official plugins are available:
+- 47개 평가 샘플
+- Candidate 1/2/3 × 5개 평가 지표
+- Google Apps Script를 통해 Google Sheets에 점수 저장
+- 결과 페이지에서 Google Sheets 데이터를 5초마다 읽어 집계
+- Google Sheets URL이 없으면 localStorage 모드로 동작
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## 실행
 
-## React Compiler
+```bash
+npm install
+npm run dev
+```
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## 배포
 
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+```bash
+npm run build
+npx gh-pages -d dist
+```
